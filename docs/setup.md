@@ -83,7 +83,23 @@ Debe terminar con `Tests: ... passed`.
 1. Abre la App Store y busca **Expo Go**.
 2. Instálala. Si ya la tenías, actualízala: tiene que ser compatible con el **SDK 58**.
 
-## 6. Abrir la app en tu iPhone
+## 6. Crear tu cuenta de Expo (gratis)
+
+Expo Go exige iniciar sesión con la misma cuenta en el computador y en el iPhone.
+
+1. Crea una cuenta en <https://expo.dev/signup>.
+2. En PowerShell, dentro de la carpeta `Frescura`:
+
+   ```bash
+   npx expo login
+   ```
+
+   Escribe tu usuario (o correo) y tu contraseña. Al escribir la contraseña no se ve nada en
+   pantalla: es normal, escríbela igual y presiona Enter.
+
+3. En el iPhone, abre Expo Go, toca **Log in** (o el ícono de perfil) y entra con la misma cuenta.
+
+## 7. Abrir la app en tu iPhone
 
 1. El computador y el iPhone deben estar **conectados a la misma red Wi-Fi**.
 2. En PowerShell, dentro de la carpeta `Frescura`:
@@ -103,6 +119,9 @@ celular. Para detenerlo, presiona `Ctrl + C` en PowerShell.
 
 ### Si el celular no se conecta
 
+Mientras la app está corriendo, PowerShell no acepta comandos nuevos: primero detenla con
+`Ctrl + C`.
+
 - Revisa que ambos estén en la misma red Wi-Fi (no en datos móviles).
 - Algunas redes (universidad, oficinas) bloquean la conexión entre dispositivos. En ese caso usa:
 
@@ -112,7 +131,7 @@ celular. Para detenerlo, presiona `Ctrl + C` en PowerShell.
 
   La primera vez te pedirá instalar un paquete extra: responde que sí (`y`).
 
-## 7. Traer los cambios nuevos
+## 8. Traer los cambios nuevos
 
 Cada vez que Claude termine una fase y suba código nuevo, en la carpeta `Frescura`:
 
