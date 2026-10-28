@@ -1,0 +1,7 @@
+# Todos los archivos de texto con saltos de línea LF, también en Windows.
+# Sin esto, Git para Windows los convierte a CRLF y Prettier marca todos los archivos.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.svg text

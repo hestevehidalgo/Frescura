@@ -98,3 +98,9 @@ corren en el computador al compilar, no código que llegue al celular. La "soluc
 npm es bajar a Expo SDK 51, lo que no tiene sentido: se espera el parche de Expo y se revisa de
 nuevo antes de cada versión publicada. Cuando el backend use Zod (fase 2), se instalará una
 versión sin el problema.
+
+### Saltos de línea LF en todos los sistemas (`.gitattributes`)
+
+Git para Windows convierte por defecto los saltos de línea a CRLF al descargar, y Prettier
+(que espera LF) marcaba los 28 archivos del proyecto como mal formateados en el computador del
+dueño. `.gitattributes` fija LF para todos los archivos de texto en cualquier sistema.
