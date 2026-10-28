@@ -7,23 +7,29 @@ sale como dice aquí, copia el mensaje de error completo y pégaselo a Claude.
 
 | Programa               | Para qué sirve                                          |
 | ---------------------- | ------------------------------------------------------- |
-| Node.js 22 LTS         | Ejecuta las herramientas de JavaScript (Expo, tests)    |
+| Node.js LTS            | Ejecuta las herramientas de JavaScript (Expo, tests)    |
 | Git                    | Descarga el código desde GitHub y guarda los cambios    |
 | Visual Studio Code     | Editor para mirar el código (opcional pero recomendado) |
 | Expo Go (en el iPhone) | Abre la app en tu celular mientras la desarrollamos     |
 
 ## 1. Instalar Node.js
 
-1. Entra a <https://nodejs.org> y descarga la versión **LTS** (debe ser 22.13 o más nueva).
-2. Abre el instalador y acepta las opciones por defecto (siguiente, siguiente, instalar).
-3. Abre la aplicación **PowerShell** (búscala en el menú Inicio) y escribe:
+1. Entra a <https://nodejs.org/en/download> (sirve cualquier versión **LTS** desde la 22.13).
+2. Arriba aparece un comando para Docker: **ignóralo**. Baja hasta la línea "Or get a prebuilt
+   Node.js for Windows running a x64 architecture" y toca el botón verde **Windows Installer
+   (.msi)**.
+3. Abre el archivo descargado y acepta las opciones por defecto (Next, Next, Install). Si aparece
+   la casilla "Automatically install the necessary tools", déjala **sin marcar**: no hace falta.
+4. Abre **PowerShell**: toca la tecla Windows, escribe `PowerShell` y presiona Enter. Se abre una
+   ventana negra que termina en `PS C:\Users\TuUsuario>` y un cursor: está esperando que
+   escribas. Escribe el comando y presiona Enter:
 
    ```bash
    node --version
    ```
 
-   Debe mostrar algo como `v22.x.x`. Si dice que no reconoce el comando, cierra PowerShell, ábrelo
-   de nuevo y vuelve a probar.
+   Debe mostrar algo como `v26.13.0`. Si dice que no reconoce el comando, cierra PowerShell, ábrelo
+   de nuevo y vuelve a probar: PowerShell solo ve los programas instalados antes de abrirse.
 
 ## 2. Instalar Git
 
