@@ -2,6 +2,85 @@
 
 Registro de decisiones técnicas y de producto, con su motivo. Lo más reciente va arriba.
 
+## 2026-10-29 · Fase 1
+
+### SQL directo con expo-sqlite, sin Drizzle
+
+El plan proponía Drizzle "si no complica". Se descartó: obliga a agregar `drizzle-orm`,
+`drizzle-kit` y un plugin de Babel para importar las migraciones. En cambio:
+
+- Las migraciones son una lista de SQL en `src/db/migrations.ts`, con la versión en
+  `PRAGMA user_version`.
+- El acceso a datos pasa por una interfaz mínima (`src/db/db.ts`).
+- Los tests usan el SQLite que ya trae Node (`node:sqlite`), así que **el SQL real se prueba sin
+  celular y sin dependencias nuevas**.
+
+### Lugares con códigos en inglés
+
+En la base, los lugares se guardan como `fridge`, `freezer` y `pantry` (regla: código en inglés).
+En pantalla se muestran como Refri, Congelador y Despensa.
+
+### Tabla de vida útil: valores curados, pendientes de revisión
+
+El servidor de FSIS bloquea la descarga automática de FoodKeeper ("Access Denied" a cualquier
+programa). El catálogo (`src/data/catalog.json`, 142 productos) y sus categorías
+(`src/data/categories.json`) se armaron con los rangos de las guías de FoodKeeper más estimaciones
+propias para productos chilenos. Todo está marcado `"reviewed": false`.
+
+Pendiente: que el dueño descargue `foodkeeper.json` desde su navegador para compararlo con la
+tabla, y revisar a mano los productos chilenos.
+
+### Escanear la fecha del envase: primero escribirla, después con la cámara
+
+El OCR necesita un módulo nativo que no está en Expo Go, y en iPhone eso exige la cuenta de Apple.
+Por ahora:
+
+- La fecha se escribe como aparece en el envase ("12/11/26", "VENC 12.11.26", "12 NOV 26").
+- La lee el mismo parser (`src/lib/package-date.ts`, con tests) que usará el OCR.
+- Cuando exista el development build, solo falta conectar la cámara a ese parser.
+
+### Avisos: se reprograman al abrir la app y al cambiar algo
+
+- Se programan los próximos 14 días (máximo 28 avisos, bajo el límite de 64 de iOS).
+- Se reprograman al abrir la app y cada vez que cambia el inventario o los ajustes.
+- **No hay tarea en segundo plano por ahora.** Si alguien no abre la app en 14 días, los avisos
+  se acaban (y probablemente ya no hay nada que avisar).
+- Se reevalúa con el development build.
+- Los botones "Me lo comí" y "Lo boté" del aviso se atienden al abrir la app si iOS no la deja
+  correr en segundo plano (pasa en Expo Go).
+
+### Open Food Facts desde el celular
+
+- La consulta va directo desde el celular: no hay backend en la fase 1, y el límite de 15
+  consultas por minuto es por IP, o sea por usuario.
+- La app se identifica con `Frescura/0.1` y la URL del repositorio, sin correo personal.
+- Se deja al menos 4 segundos entre consultas.
+- Lo encontrado se guarda en la tabla `barcodes` del celular para no volver a consultarlo.
+- Licencia ODbL: se cita en Ajustes → Acerca de. Si en la fase 2 esos datos pasan al diccionario
+  compartido, esa parte del diccionario debe publicarse con la misma licencia.
+
+### Lotes como filas separadas
+
+Cada compra del mismo producto es una fila con su propia fecha. La que vence antes dice "Usa este
+primero · 2 lotes". Es más simple que una lista agrupada y cumple el objetivo.
+
+### Acción masiva por compra, en la fase 2
+
+"Ya se consumió todo lo de la compra del 12/10" necesita boletas. En la fase 1 se puede
+seleccionar varios productos y marcarlos de una vez.
+
+### `metro.config.js` solo para la versión web
+
+Agrega el archivo `.wasm` que usa expo-sqlite en el navegador. La versión web sirve para revisar
+pantallas en pruebas automáticas; en el celular no cambia nada.
+
+### Dependencias de la fase 1
+
+**Ninguna nueva.** Se usaron módulos ya instalados en la fase 0: `expo-sqlite`, `expo-camera`,
+`expo-notifications`, `expo-haptics`, `react-native-gesture-handler` y
+`react-native-reanimated`. Se quitó `expo-localization`, que no hizo falta: la zona horaria sale
+del reloj del celular.
+
 ## 2026-10-28 · Fase 0
 
 ### iOS y Android desde el inicio; se prueba primero en iPhone

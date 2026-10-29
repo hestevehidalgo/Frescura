@@ -16,6 +16,12 @@ describe.each(['light', 'dark'] as const)('paleta %s', (scheme) => {
     ['onAccent', 'accent'],
     ['primary', 'background'],
     ['tabInactive', 'surface'],
+    ['dangerFg', 'dangerBg'],
+    ['warnFg', 'warnBg'],
+    ['okFg', 'okBg'],
+    ['neutralFg', 'neutralBg'],
+    ['accent', 'surface'],
+    ['primary', 'surface'],
   ] as const)('%s sobre %s cumple AA', (fg, bg) => {
     expect(contrastRatio(c[fg], c[bg])).toBeGreaterThanOrEqual(AA_TEXT);
   });

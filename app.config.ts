@@ -32,7 +32,15 @@ const config: ExpoConfig = {
   plugins: [
     'expo-router',
     'expo-sqlite',
-    'expo-localization',
+    [
+      'expo-camera',
+      {
+        cameraPermission:
+          'Frescura usa la cámara para leer códigos de barras y fechas de vencimiento. Las imágenes no salen de tu celular.',
+        microphonePermission: false,
+        recordAudioAndroid: false,
+      },
+    ],
     [
       'expo-splash-screen',
       {

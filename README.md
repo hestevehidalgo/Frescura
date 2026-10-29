@@ -14,8 +14,8 @@ avisa a tiempo y sugiere recetas con lo que está por vencer.
 
 | Fase | Contenido                                       | Estado              |
 | ---- | ----------------------------------------------- | ------------------- |
-| 0    | Preparación: proyecto, herramientas, navegación | Lista para revisión |
-| 1    | Inventario local sin IA                         | Pendiente           |
+| 0    | Preparación: proyecto, herramientas, navegación | Aprobada            |
+| 1    | Inventario local sin IA                         | Lista para revisión |
 | 2    | Escaneo de boletas                              | Pendiente           |
 | 3    | Recetas                                         | Pendiente           |
 | 4    | Estadísticas y pulido                           | Pendiente           |

@@ -44,7 +44,12 @@ npx expo start         # servidor de desarrollo
   debe cumplir contraste AA; agrega el par a `src/theme/colors.test.ts`.
 - Accesibilidad: áreas táctiles de al menos `MIN_TOUCH` (44 pt), `accessibilityLabel` en botones
   con solo ícono, y estados con color + ícono + texto (nunca solo color).
-- Tests junto al archivo: `algo.ts` → `algo.test.ts`.
+- Tests junto al archivo: `algo.ts` → `algo.test.ts`. La lógica va en funciones puras (sin React)
+  para poder probarla. El SQL se prueba con una base real en memoria: `createMigratedDb()` de
+  `src/db/test-db.ts`.
+- Los datos viven en SQLite (`src/db`). Las pantallas leen con los hooks de
+  `src/features/inventory/store.ts` y, después de escribir, llaman a `notifyInventoryChanged()`.
+- Migraciones: nunca editar una ya publicada; agregar una nueva al final de `src/db/migrations.ts`.
 
 ## Expo (SDK 58)
 

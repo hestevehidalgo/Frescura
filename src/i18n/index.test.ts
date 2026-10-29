@@ -1,4 +1,4 @@
-import { interpolate, t } from './index';
+import { interpolate, joinList, t, tn } from './index';
 
 describe('t', () => {
   it('devuelve el texto de una clave anidada', () => {
@@ -18,5 +18,19 @@ describe('interpolate', () => {
 
   it('deja intactos los marcadores sin parámetro', () => {
     expect(interpolate('Hola {nombre}', {})).toBe('Hola {nombre}');
+  });
+});
+
+describe('tn y joinList', () => {
+  it('elige singular o plural', () => {
+    expect(tn('toasts.added', 1)).toBe('Agregaste 1 producto');
+    expect(tn('toasts.added', 3)).toBe('Agregaste 3 productos');
+    expect(tn('toasts.added', 0)).toBe('Agregaste 0 productos');
+  });
+
+  it('une listas en español', () => {
+    expect(joinList(['palta'])).toBe('palta');
+    expect(joinList(['palta', 'tomate'])).toBe('palta y tomate');
+    expect(joinList(['palta', 'tomate', 'lechuga'])).toBe('palta, tomate y lechuga');
   });
 });
