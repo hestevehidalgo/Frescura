@@ -4,3 +4,4 @@ dist
 package-lock.json
 assets
 SPEC.md
+src/data/catalog.json

@@ -1,0 +1,200 @@
+{
+  "_about": "Categorías cerradas de alimentos (también las usará la IA en la fase 2). Rangos en días [mínimo, máximo]. Para avisar se usa el mínimo. Valores por revisar.",
+  "categories": [
+    {
+      "id": "frutas",
+      "name": "Frutas",
+      "emoji": "🍎",
+      "risk": "low",
+      "storage": "fridge",
+      "pantry": [3, 5],
+      "fridge": [5, 10],
+      "freezer": [180, 270],
+      "thawed": [1, 2]
+    },
+    {
+      "id": "verduras",
+      "name": "Verduras",
+      "emoji": "🥬",
+      "risk": "low",
+      "storage": "fridge",
+      "pantry": [2, 4],
+      "fridge": [4, 7],
+      "freezer": [180, 270],
+      "thawed": [1, 2]
+    },
+    {
+      "id": "lacteos",
+      "name": "Lácteos",
+      "emoji": "🥛",
+      "risk": "medium",
+      "freshStrict": true,
+      "storage": "fridge",
+      "fridge": [5, 7],
+      "fridgeOpened": [3, 5],
+      "freezer": [30, 60],
+      "thawed": [1, 2]
+    },
+    {
+      "id": "quesos",
+      "name": "Quesos",
+      "emoji": "🧀",
+      "risk": "medium",
+      "freshStrict": true,
+      "storage": "fridge",
+      "fridge": [14, 28],
+      "fridgeOpened": [7, 14],
+      "freezer": [60, 120],
+      "thawed": [2, 3]
+    },
+    {
+      "id": "huevos",
+      "name": "Huevos",
+      "emoji": "🥚",
+      "risk": "medium",
+      "storage": "fridge",
+      "fridge": [21, 35],
+      "thawed": [1, 2]
+    },
+    {
+      "id": "carnes",
+      "name": "Carnes",
+      "emoji": "🥩",
+      "risk": "high",
+      "storage": "fridge",
+      "dateType": "use_by",
+      "fridge": [1, 2],
+      "freezer": [90, 120],
+      "thawed": [1, 2]
+    },
+    {
+      "id": "aves",
+      "name": "Pollo y pavo",
+      "emoji": "🍗",
+      "risk": "high",
+      "storage": "fridge",
+      "dateType": "use_by",
+      "fridge": [1, 2],
+      "freezer": [180, 270],
+      "thawed": [1, 2]
+    },
+    {
+      "id": "pescados",
+      "name": "Pescados y mariscos",
+      "emoji": "🐟",
+      "risk": "high",
+      "storage": "fridge",
+      "dateType": "use_by",
+      "fridge": [1, 2],
+      "freezer": [90, 180],
+      "thawed": [1, 2]
+    },
+    {
+      "id": "embutidos",
+      "name": "Fiambres y embutidos",
+      "emoji": "🥓",
+      "risk": "high",
+      "storage": "fridge",
+      "dateType": "use_by",
+      "fridge": [7, 14],
+      "fridgeOpened": [3, 5],
+      "freezer": [30, 60],
+      "thawed": [1, 2]
+    },
+    {
+      "id": "panaderia",
+      "name": "Pan y pastelería",
+      "emoji": "🍞",
+      "risk": "low",
+      "storage": "pantry",
+      "pantry": [2, 3],
+      "freezer": [60, 90],
+      "thawed": [1, 2]
+    },
+    {
+      "id": "abarrotes",
+      "name": "Abarrotes",
+      "emoji": "🌾",
+      "risk": "low",
+      "longLife": true,
+      "storage": "pantry",
+      "dateType": "best_before",
+      "pantry": [180, 365],
+      "pantryOpened": [90, 180]
+    },
+    {
+      "id": "conservas",
+      "name": "Conservas",
+      "emoji": "🥫",
+      "risk": "low",
+      "longLife": true,
+      "storage": "pantry",
+      "dateType": "best_before",
+      "pantry": [365, 730],
+      "fridgeOpened": [3, 4]
+    },
+    {
+      "id": "salsas",
+      "name": "Salsas y aderezos",
+      "emoji": "🫙",
+      "risk": "low",
+      "storage": "pantry",
+      "dateType": "best_before",
+      "pantry": [180, 365],
+      "fridgeOpened": [30, 60]
+    },
+    {
+      "id": "bebidas",
+      "name": "Bebidas y jugos",
+      "emoji": "🧃",
+      "risk": "low",
+      "storage": "pantry",
+      "dateType": "best_before",
+      "pantry": [180, 365],
+      "fridgeOpened": [5, 7]
+    },
+    {
+      "id": "congelados",
+      "name": "Congelados",
+      "emoji": "🧊",
+      "risk": "medium",
+      "storage": "freezer",
+      "freezer": [180, 270],
+      "fridge": [1, 2],
+      "thawed": [1, 2]
+    },
+    {
+      "id": "preparados",
+      "name": "Comida preparada y sobras",
+      "emoji": "🍲",
+      "risk": "high",
+      "cooked": true,
+      "storage": "fridge",
+      "dateType": "use_by",
+      "fridge": [3, 4],
+      "freezer": [60, 90],
+      "thawed": [1, 2]
+    },
+    {
+      "id": "snacks",
+      "name": "Snacks y dulces",
+      "emoji": "🍪",
+      "risk": "low",
+      "storage": "pantry",
+      "dateType": "best_before",
+      "pantry": [60, 120],
+      "pantryOpened": [14, 30]
+    },
+    {
+      "id": "otros",
+      "name": "Otros",
+      "emoji": "🛒",
+      "risk": "medium",
+      "storage": "fridge",
+      "fridge": [3, 5],
+      "pantry": [7, 14],
+      "freezer": [60, 90],
+      "thawed": [1, 2]
+    }
+  ]
+}
