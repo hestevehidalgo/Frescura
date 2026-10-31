@@ -2,6 +2,13 @@
 
 Registro de decisiones técnicas y de producto, con su motivo. Lo más reciente va arriba.
 
+## 2026-10-31 · Ajustes pedidos por el dueño
+
+### Barra de pestañas: Escanear, Inicio, Recetas, Resumen
+
+El dueño pidió que Escanear no sobresalga: ahora es un círculo verde del mismo tamaño que los
+otros íconos y va primero. La app sigue abriendo en Inicio (`initialRouteName: 'index'`).
+
 ## 2026-10-29 · Fase 1
 
 ### SQL directo con expo-sqlite, sin Drizzle

@@ -38,15 +38,19 @@ function tabIcon(outline: IconName, filled: IconName) {
   return TabIcon;
 }
 
-// El botón de escanear es el más visible: círculo de color en el centro de la barra.
+// Escanear lleva un círculo verde del mismo tamaño que los otros íconos, para distinguirlo sin
+// que domine la barra.
 function ScanIcon({ focused }: { focused: boolean }) {
   const colors = useThemeColors();
   return (
     <View style={[styles.scanBubble, { backgroundColor: colors.primary }]}>
-      <Ionicons name={focused ? 'scan' : 'scan-outline'} size={26} color={colors.onPrimary} />
+      <Ionicons name={focused ? 'scan' : 'scan-outline'} size={16} color={colors.onPrimary} />
     </View>
   );
 }
+
+// Al abrir la app se parte en Inicio, aunque Escanear vaya primero en la barra.
+export const unstable_settings = { initialRouteName: 'index' };
 
 export default function TabsLayout() {
   const colors = useThemeColors();
@@ -63,16 +67,16 @@ export default function TabsLayout() {
         tabBarLabelStyle: { fontWeight: '600' },
       }}>
       <Tabs.Screen
-        name="index"
-        options={{ title: t('tabs.home'), tabBarIcon: tabIcon('home-outline', 'home') }}
-      />
-      <Tabs.Screen
         name="scan"
         options={{
           title: t('tabs.scan'),
           tabBarIcon: ScanIcon,
           tabBarActiveTintColor: colors.primary,
         }}
+      />
+      <Tabs.Screen
+        name="index"
+        options={{ title: t('tabs.home'), tabBarIcon: tabIcon('home-outline', 'home') }}
       />
       <Tabs.Screen
         name="recipes"
@@ -100,13 +104,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: spacing.sm,
   },
-  // Sobresale de la barra sin cambiar su alto, así las etiquetas no se cortan.
   scanBubble: {
-    width: 52,
-    height: 52,
+    width: 26,
+    height: 26,
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
-    transform: [{ translateY: -12 }],
   },
 });
