@@ -84,6 +84,11 @@ const MIGRATIONS: string[] = [
     value TEXT NOT NULL
   );
   `,
+  // 2: boletas escaneadas con foto (huella de la imagen para no leer dos veces la misma)
+  `
+  ALTER TABLE receipts ADD COLUMN image_hash TEXT;
+  CREATE INDEX receipts_image_hash ON receipts (image_hash);
+  `,
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS.length;

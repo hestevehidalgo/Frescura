@@ -173,3 +173,23 @@ export function searchCatalog(query: string, limit = 8): Product[] {
     .slice(0, limit)
     .map((s) => s.product);
 }
+
+/**
+ * Producto del catálogo que corresponde a un nombre (de Open Food Facts o de una boleta), si el
+ * nombre empieza con él ("Leche entera Colún 1L" → leche larga vida). Así se usa la vida útil
+ * específica y no la genérica de la categoría.
+ */
+export function matchCatalog(name: string): Product | null {
+  const normalized = normalizeForSearch(name);
+  const words = normalized.split(' ');
+  for (let length = Math.min(3, words.length); length >= 1; length--) {
+    const prefix = words.slice(0, length).join(' ');
+    const match = searchCatalog(prefix, 3).find((p) =>
+      [p.name, ...p.aliases].map(normalizeForSearch).some((n) => n === prefix),
+    );
+    if (match) {
+      return match;
+    }
+  }
+  return null;
+}

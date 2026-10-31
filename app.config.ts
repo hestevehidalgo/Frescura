@@ -42,6 +42,15 @@ const config: ExpoConfig = {
       },
     ],
     [
+      'expo-image-picker',
+      {
+        photosPermission:
+          'Frescura usa tus fotos solo si eliges una boleta desde la galería para leerla.',
+        cameraPermission:
+          'Frescura usa la cámara para fotografiar boletas, códigos de barras y fechas de vencimiento.',
+      },
+    ],
+    [
       'expo-splash-screen',
       {
         backgroundColor: '#FBF7F0',

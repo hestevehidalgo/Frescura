@@ -1,0 +1,42 @@
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
+import * as ImagePicker from 'expo-image-picker';
+
+// Ancho al que se reduce la foto antes de mandarla: suficiente para leer una boleta y barato en
+// tokens. Se ajusta con el set de evaluación.
+const TARGET_WIDTH = 1100;
+const JPEG_QUALITY = 0.6;
+
+export type CapturedImage = { base64: string; uri: string };
+export type CaptureResult = CapturedImage | 'cancelled' | 'denied';
+
+async function shrink(uri: string): Promise<CapturedImage> {
+  const rendered = await ImageManipulator.manipulate(uri)
+    .resize({ width: TARGET_WIDTH })
+    .renderAsync();
+  const saved = await rendered.saveAsync({
+    base64: true,
+    compress: JPEG_QUALITY,
+    format: SaveFormat.JPEG,
+  });
+  return { base64: saved.base64 ?? '', uri: saved.uri };
+}
+
+export async function captureReceipt(source: 'camera' | 'library'): Promise<CaptureResult> {
+  const permission =
+    source === 'camera'
+      ? await ImagePicker.requestCameraPermissionsAsync()
+      : await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (!permission.granted) {
+    return 'denied';
+  }
+  const options: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], quality: 1 };
+  const result =
+    source === 'camera'
+      ? await ImagePicker.launchCameraAsync(options)
+      : await ImagePicker.launchImageLibraryAsync(options);
+  const asset = result.canceled ? undefined : result.assets[0];
+  if (!asset) {
+    return 'cancelled';
+  }
+  return shrink(asset.uri);
+}

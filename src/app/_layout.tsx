@@ -54,6 +54,7 @@ export default function RootLayout() {
                 name="edit/[id]"
                 options={{ title: t('edit.title'), presentation: 'modal' }}
               />
+              <Stack.Screen name="receipt-review" options={{ title: t('review.title') }} />
               <Stack.Screen
                 name="barcode"
                 options={{ title: t('barcode.title'), presentation: 'modal' }}

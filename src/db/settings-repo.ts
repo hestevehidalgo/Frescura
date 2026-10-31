@@ -18,6 +18,8 @@ export type Settings = {
   /** Básicos que "siempre tengo", para las recetas. */
   pantryBasics: string[];
   notificationPromptAnswered: boolean;
+  /** Aceptó que la foto de la boleta se envíe a la IA para leerla. */
+  receiptPhotoConsent: boolean;
 };
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -31,6 +33,7 @@ export const DEFAULT_SETTINGS: Settings = {
   longLifeAlerts: false,
   pantryBasics: ['sal', 'aceite', 'azucar', 'harina', 'ajo'],
   notificationPromptAnswered: false,
+  receiptPhotoConsent: false,
 };
 
 export async function getSettings(db: Db): Promise<Settings> {

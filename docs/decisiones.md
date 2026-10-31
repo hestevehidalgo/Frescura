@@ -2,6 +2,73 @@
 
 Registro de decisiones técnicas y de producto, con su motivo. Lo más reciente va arriba.
 
+## 2026-10-31 · Fase 2 (versión provisoria con foto)
+
+### La foto va a la IA mientras no exista la versión instalada
+
+El dueño eligió no pagar todavía la cuenta de Apple. Sin ella no hay OCR en el iPhone, así que la
+foto de la boleta se envía a la IA (Claude Haiku 5.5 con imagen).
+
+- **Costo estimado:** unos US$0,0005 a US$0,001 por boleta. La foto se reduce a 1.100 px de ancho
+  en JPEG al 60 %. Se medirá con `scripts/cost-report.sql`.
+- **Precios:** sin OCR, los lee la IA desde la imagen. Para detectar errores se cuadra la suma
+  contra el total impreso.
+- **Después:** con el development build se cambia a OCR en el celular + solo texto, como dice el
+  plan original.
+- **Privacidad:** la foto sale del celular solo para leerla y nunca se guarda en el servidor. La
+  primera vez se pide aceptar un aviso.
+
+### Backend: Supabase con sesión anónima, cuotas y registro de costos
+
+- **Edge Function `parse-receipt`:** valida la sesión anónima y la imagen (tamaño y formato),
+  limita a 3 llamadas por minuto y descuenta la cuota mensual (30 escaneos) de forma atómica en
+  Postgres. Si la IA falla, devuelve la cuota.
+- **Llamada a la IA:** salida estructurada, razonamiento apagado, esfuerzo bajo, prompt de
+  sistema en caché y un reintento si la respuesta no se puede validar.
+- **Registro:** guarda modelo, tokens y costo en `ai_usage`, sin el contenido de la boleta.
+- **Tablas:** `quotas` y `ai_usage` tienen RLS activado sin políticas, así que nadie las toca
+  desde la app.
+- **Lógica:** el esquema, el prompt, la validación y el cálculo de costo viven en
+  `supabase/functions/parse-receipt/logic.ts`, que comparten la función, la app y los tests.
+
+### Validación de la respuesta sin Zod
+
+El documento pedía Zod. La salida estructurada de la API ya garantiza la forma del JSON, y un
+validador propio de 60 líneas (con tests) limpia los valores. Así no hay dependencia extra ni en
+la función ni en la app.
+
+### Diccionario compartido postergado
+
+En la versión con foto, la IA lee la boleta entera de todas formas, así que el diccionario de
+líneas no ahorra nada todavía. Se construye junto con el OCR, cuando el texto de cada línea se
+pueda buscar antes de llamar a la IA.
+
+### No pagar dos veces por la misma boleta
+
+- **Antes de llamar a la IA:** la app calcula una huella de la foto y, si ya la leyó, no la
+  manda.
+- **Después:** con el RUT del emisor y el folio avisa si la boleta ya estaba guardada.
+
+### Dependencias nuevas de la fase 2
+
+- `expo-image-picker`: sacar la foto o elegirla de la galería (incluido en Expo Go).
+- `expo-image-manipulator`: achicar la foto antes de mandarla, para pagar menos (incluido en
+  Expo Go).
+- `@supabase/supabase-js`: sesión anónima y llamada a la función. Es la vía documentada; la API
+  REST de sesión anónima no está documentada.
+
+### `npm audit` (31 oct 2026)
+
+Con la actualización de parches de Expo desaparecieron los avisos altos. Quedan 12 moderados, todos
+en herramientas de Expo que corren en el computador (`glob` y `minimatch` dentro de `@expo/cli` y
+`@expo/config-plugins`), no en la app.
+
+### Pendiente antes de publicar
+
+- Activar CAPTCHA (Turnstile) para las sesiones anónimas: Supabase lo recomienda contra el
+  abuso.
+- Set de evaluación con 20 a 30 boletas reales y script `eval-receipts` (fase 2, parte 2).
+
 ## 2026-10-31 · Ajustes pedidos por el dueño
 
 ### Respuestas a las 30 preguntas

@@ -1,4 +1,6 @@
-import { categoryFromTags, lookupBarcode, matchCatalog, resetRateLimit } from './openfoodfacts';
+import { matchCatalog } from '@/features/catalog/catalog';
+
+import { categoryFromTags, lookupBarcode, resetRateLimit } from './openfoodfacts';
 
 function fakeFetch(status: number, body: unknown) {
   const calls: { url: string; headers: Record<string, string> }[] = [];

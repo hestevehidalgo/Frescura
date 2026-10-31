@@ -44,3 +44,7 @@ example
 
 # secretos
 .env
+
+# Supabase CLI (archivos locales del computador)
+supabase/.temp
+supabase/.branches

@@ -1,6 +1,6 @@
 import type { Db } from '@/db/db';
 import { archiveUnanswered, getItem, listEvents, listItems } from '@/db/inventory-repo';
-import { migrate } from '@/db/migrations';
+import { migrate, SCHEMA_VERSION } from '@/db/migrations';
 import {
   createCustomProduct,
   findBarcode,
@@ -31,7 +31,7 @@ beforeEach(async () => {
 describe('migraciones', () => {
   it('se pueden correr dos veces sin error', async () => {
     await migrate(db);
-    expect(await db.getFirstAsync('PRAGMA user_version')).toEqual({ user_version: 1 });
+    expect(await db.getFirstAsync('PRAGMA user_version')).toEqual({ user_version: SCHEMA_VERSION });
   });
 });
 
