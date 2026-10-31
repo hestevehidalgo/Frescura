@@ -133,17 +133,32 @@ Mientras la app está corriendo, PowerShell no acepta comandos nuevos: primero d
 
 ## 8. Traer los cambios nuevos
 
-Cada vez que Claude termine una fase y suba código nuevo, en la carpeta `Frescura`:
+Cada vez que Claude suba código nuevo, en la carpeta `Frescura` (con la app detenida con
+`Ctrl + C`):
+
+```bash
+git checkout -- package-lock.json
+```
 
 ```bash
 git pull
 ```
 
 ```bash
-npm install
+npm ci
 ```
 
-Y luego vuelve a abrir la app con `npx expo start`.
+```bash
+npx expo start --clear
+```
+
+- El primer comando descarta un cambio automático que hace `npm` en tu computador y que no sirve
+  (si no, `git pull` se niega a traer lo nuevo).
+- `npm ci` instala exactamente las versiones del proyecto **sin modificar archivos**. Úsalo en
+  vez de `npm install`.
+
+Si `git pull` igual dice `Your local changes ... would be overwritten`, escribe `git stash` y
+repite `git pull`.
 
 ## Más adelante
 
