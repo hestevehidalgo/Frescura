@@ -273,8 +273,8 @@ describe('productos propios y códigos de barras', () => {
 describe('ajustes', () => {
   it('parte con los valores por defecto y guarda cambios', async () => {
     expect(await getSettings(db)).toEqual(DEFAULT_SETTINGS);
-    const updated = await saveSettings(db, { summaryHour: 19, daysAhead: 3 });
-    expect(updated).toMatchObject({ summaryHour: 19, daysAhead: 3, summaryMinute: 30 });
+    const updated = await saveSettings(db, { summaryHour: 19, summaryWeekday: 3 });
+    expect(updated).toMatchObject({ summaryHour: 19, summaryWeekday: 3, summaryMinute: 0 });
     expect(await getSettings(db)).toEqual(updated);
   });
 });

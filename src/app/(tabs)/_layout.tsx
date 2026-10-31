@@ -9,18 +9,29 @@ import { MIN_TOUCH, radius, spacing, useThemeColors } from '@/theme';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
-function SettingsButton() {
+function HeaderButtons() {
   const colors = useThemeColors();
   return (
-    <Link href="/settings" asChild>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={t('settings.open')}
-        hitSlop={8}
-        style={styles.headerButton}>
-        <Ionicons name="settings-outline" size={24} color={colors.text} />
-      </Pressable>
-    </Link>
+    <View style={styles.headerButtons}>
+      <Link href="/add" asChild>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('home.addButton')}
+          hitSlop={8}
+          style={styles.headerButton}>
+          <Ionicons name="add-circle" size={30} color={colors.primary} />
+        </Pressable>
+      </Link>
+      <Link href="/settings" asChild>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('settings.open')}
+          hitSlop={8}
+          style={styles.headerButton}>
+          <Ionicons name="settings-outline" size={24} color={colors.text} />
+        </Pressable>
+      </Link>
+    </View>
   );
 }
 
@@ -57,7 +68,7 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerRight: () => <SettingsButton />,
+        headerRight: () => <HeaderButtons />,
         headerStyle: { backgroundColor: colors.background },
         headerShadowVisible: false,
         tabBarActiveTintColor: colors.primary,
@@ -97,12 +108,12 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
+  headerButtons: { flexDirection: 'row', alignItems: 'center', marginRight: spacing.sm },
   headerButton: {
     minWidth: MIN_TOUCH,
     minHeight: MIN_TOUCH,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: spacing.sm,
   },
   scanBubble: {
     width: 26,

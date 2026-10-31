@@ -1,21 +1,32 @@
-// Decide qué avisos programar en los próximos días. Sin efectos: lo prueba planner.test.ts.
-// Regla: un solo resumen al día, y solo si hay algo por vencer. Nunca de noche.
+// Decide qué avisos programar. Sin efectos: lo prueba planner.test.ts.
+// Regla: la app no es invasiva. Un solo resumen a la semana (por defecto el domingo), y solo si
+// algo vence esa semana. Nunca de noche.
 
 import type { InventoryItem } from '@/db/inventory-repo';
 import type { Settings } from '@/db/settings-repo';
 import type { Product } from '@/features/catalog/catalog';
-import { joinList, t, tn } from '@/i18n';
-import { addDays, atLocalTime, daysBetween, type IsoDate } from '@/lib/dates';
+import { joinList, t, tn, type MessageKey } from '@/i18n';
+import { addDays, atLocalTime, nextWeekday, weekdayOf, type IsoDate } from '@/lib/dates';
 import { capitalize } from '@/lib/text';
 
-/** Días hacia adelante que se programan. iOS permite máximo 64 avisos por app. */
-export const PLAN_DAYS = 14;
+/** Semanas hacia adelante que se programan (muy por debajo del límite de 64 avisos de iOS). */
+export const PLAN_WEEKS = 4;
 export const IOS_LIMIT = 64;
 const MAX_LISTED = 3;
 
-export type NotificationKind = 'summary' | 'morning';
+export type NotificationKind = 'summary';
 export const CATEGORY_SINGLE = 'single_item';
 export const CATEGORY_SUMMARY = 'summary';
+
+export const WEEKDAY_KEYS: MessageKey[] = [
+  'weekdays.sun',
+  'weekdays.mon',
+  'weekdays.tue',
+  'weekdays.wed',
+  'weekdays.thu',
+  'weekdays.fri',
+  'weekdays.sat',
+];
 
 export type PlannedNotification = {
   id: string;
@@ -49,29 +60,13 @@ export function isQuietTime(minutes: number, quietStart: number, quietEnd: numbe
     : minutes >= quietStart || minutes < quietEnd;
 }
 
-/** Hora del resumen fuera del horario silencioso: si cae adentro, se adelanta a antes de dormir. */
+/** Hora del resumen fuera del horario silencioso: si cae adentro, se mueve al final del silencio. */
 function summaryTime(day: IsoDate, settings: Settings): Date {
   const date = atLocalTime(day, settings.summaryHour, settings.summaryMinute);
   if (!isQuietTime(minutesOf(date), settings.quietStart, settings.quietEnd)) {
     return date;
   }
-  const fallback = Math.max(0, settings.quietStart - 15);
-  return atLocalTime(day, Math.floor(fallback / 60), fallback % 60);
-}
-
-function morningTime(day: IsoDate, settings: Settings): Date {
-  const minutes = Math.max(settings.morningHour * 60, settings.quietEnd);
-  return atLocalTime(day, Math.floor(minutes / 60), minutes % 60);
-}
-
-function whenLabel(days: number): string {
-  if (days <= 0) {
-    return t('notifications.whenToday');
-  }
-  if (days === 1) {
-    return t('notifications.whenTomorrow');
-  }
-  return t('notifications.whenInDays', { n: days });
+  return atLocalTime(day, Math.floor(settings.quietEnd / 60), settings.quietEnd % 60);
 }
 
 function alerts(item: InventoryItem, lookup: PlanInput['lookup'], settings: Settings): boolean {
@@ -88,9 +83,10 @@ function alerts(item: InventoryItem, lookup: PlanInput['lookup'], settings: Sett
   return settings.longLifeAlerts || !product.longLife;
 }
 
-/** Carnes, pollo, pescados y mariscos frescos: los del aviso de la mañana. */
-function isFreshProtein(product: Product | undefined): boolean {
-  return !!product && ['carnes', 'aves', 'pescados'].includes(product.categoryId);
+function dayName(date: IsoDate, summaryDay: IsoDate): string {
+  return date === summaryDay
+    ? t('notifications.whenToday')
+    : t(WEEKDAY_KEYS[weekdayOf(date)] ?? 'weekdays.sun');
 }
 
 export function planNotifications({
@@ -105,68 +101,48 @@ export function planNotifications({
   }
   const candidates = items.filter((item) => alerts(item, lookup, settings));
   const plan: PlannedNotification[] = [];
+  const firstDay = nextWeekday(today, settings.summaryWeekday);
 
-  for (let offset = 0; offset < PLAN_DAYS; offset++) {
-    const day = addDays(today, offset);
-
-    // Aviso de la mañana: proteínas frescas que vencen ese mismo día.
-    if (settings.morningAlert) {
-      const due = candidates.filter(
-        (item) => item.expiresAt === day && isFreshProtein(lookup(item.productId)),
-      );
-      const date = morningTime(day, settings);
-      const first = due[0];
-      if (first && date > now) {
-        plan.push({
-          id: `morning-${day}`,
-          kind: 'morning',
-          date,
-          title: t('notifications.morningTitle', {
-            name: joinList(due.slice(0, MAX_LISTED).map((i) => i.displayName.toLowerCase())),
-          }),
-          body: t('notifications.morningBody'),
-          categoryId: due.length === 1 ? CATEGORY_SINGLE : CATEGORY_SUMMARY,
-          itemId: due.length === 1 ? first.id : null,
-        });
-      }
-    }
-
-    // Resumen diario: lo que vence entre hoy y los próximos días elegidos.
+  for (let week = 0; week <= PLAN_WEEKS; week++) {
+    const day = addDays(firstDay, week * 7);
     const date = summaryTime(day, settings);
     if (date <= now) {
       continue;
     }
-    const soon = candidates
-      .map((item) => ({ item, days: daysBetween(day, item.expiresAt) }))
-      .filter(({ days }) => days >= 0 && days <= settings.daysAhead)
+    // Lo que vence desde el día del resumen hasta el día anterior al próximo resumen.
+    const end = addDays(day, 6);
+    const due = candidates
+      .filter((item) => item.expiresAt >= day && item.expiresAt <= end)
       .sort(
-        (a, b) => a.days - b.days || a.item.displayName.localeCompare(b.item.displayName, 'es'),
+        (a, b) =>
+          a.expiresAt.localeCompare(b.expiresAt) ||
+          a.displayName.localeCompare(b.displayName, 'es'),
       );
-    const first = soon[0];
+    const first = due[0];
     if (!first) {
       continue;
     }
-    const listed = soon
+    const listed = due
       .slice(0, MAX_LISTED)
-      .map(({ item, days }) => `${item.displayName.toLowerCase()} (${whenLabel(days)})`);
-    if (soon.length > MAX_LISTED) {
-      listed.push(t('notifications.more', { n: soon.length - MAX_LISTED }));
+      .map((item) => `${item.displayName.toLowerCase()} (${dayName(item.expiresAt, day)})`);
+    if (due.length > MAX_LISTED) {
+      listed.push(t('notifications.more', { n: due.length - MAX_LISTED }));
     }
     plan.push({
       id: `summary-${day}`,
       kind: 'summary',
       date,
       title:
-        soon.length === 1
-          ? t('notifications.summaryTitleOne', {
-              name: first.item.displayName,
-              when: whenLabel(first.days),
-            })
-          : tn('notifications.summaryTitleMany', soon.length),
-      body: t('notifications.summaryBody', { list: capitalize(joinList(listed)) }),
-      categoryId: soon.length === 1 ? CATEGORY_SINGLE : CATEGORY_SUMMARY,
-      itemId: soon.length === 1 ? first.item.id : null,
+        due.length === 1
+          ? t('notifications.weeklyTitleOne', { name: first.displayName })
+          : tn('notifications.weeklyTitleMany', due.length),
+      body: `${capitalize(joinList(listed))}.`,
+      categoryId: due.length === 1 ? CATEGORY_SINGLE : CATEGORY_SUMMARY,
+      itemId: due.length === 1 ? first.id : null,
     });
+    if (plan.length >= PLAN_WEEKS) {
+      break;
+    }
   }
 
   return plan.slice(0, IOS_LIMIT - 4);

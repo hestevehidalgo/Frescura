@@ -13,8 +13,13 @@ import {
   hasNotificationPermission,
   requestNotificationPermission,
 } from '@/features/notifications/scheduler';
-import { t, tn } from '@/i18n';
+import { WEEKDAY_KEYS } from '@/features/notifications/planner';
+import { t } from '@/i18n';
+import { capitalize } from '@/lib/text';
 import { MIN_TOUCH, radius, spacing, useThemeColors } from '@/theme';
+
+// La semana parte el lunes.
+const WEEKDAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
 const PANTRY_OPTIONS = [
   'sal',
@@ -125,7 +130,7 @@ export default function SettingsScreen() {
 
   const summaryMinutes = settings.summaryHour * 60 + settings.summaryMinute;
   const shiftSummary = (delta: number) => {
-    const next = Math.min(21 * 60 + 30, Math.max(8 * 60, summaryMinutes + delta));
+    const next = Math.min(21 * 60 + 30, Math.max(7 * 60, summaryMinutes + delta));
     void update({ summaryHour: Math.floor(next / 60), summaryMinute: next % 60 });
   };
 
@@ -146,6 +151,22 @@ export default function SettingsScreen() {
         {permission === false && settings.notificationsEnabled && (
           <ThemedText style={{ color: c.dangerFg }}>{t('settings.permissionDenied')}</ThemedText>
         )}
+        <ThemedText variant="muted" style={styles.small}>
+          {t('settings.notificationsHint')}
+        </ThemedText>
+        <View style={styles.block}>
+          <ThemedText>{t('settings.summaryDay')}</ThemedText>
+          <ChipRow>
+            {WEEKDAY_ORDER.map((weekday) => (
+              <Chip
+                key={weekday}
+                label={capitalize(t(WEEKDAY_KEYS[weekday] ?? 'weekdays.sun'))}
+                selected={settings.summaryWeekday === weekday}
+                onPress={() => void update({ summaryWeekday: weekday })}
+              />
+            ))}
+          </ChipRow>
+        </View>
         <View style={styles.block}>
           <ThemedText>{t('settings.summaryTime')}</ThemedText>
           <View style={styles.timeRow}>
@@ -160,24 +181,6 @@ export default function SettingsScreen() {
             <IconButton icon="add" label={t('settings.later')} onPress={() => shiftSummary(30)} />
           </View>
         </View>
-        <View style={styles.block}>
-          <ThemedText>{t('settings.daysAhead')}</ThemedText>
-          <ChipRow>
-            {([1, 2, 3] as const).map((days) => (
-              <Chip
-                key={days}
-                label={tn('settings.daysAheadOption', days)}
-                selected={settings.daysAhead === days}
-                onPress={() => void update({ daysAhead: days })}
-              />
-            ))}
-          </ChipRow>
-        </View>
-        <ToggleRow
-          label={t('settings.morningAlert')}
-          value={settings.morningAlert}
-          onChange={(v) => void update({ morningAlert: v })}
-        />
         <ToggleRow
           label={t('settings.longLifeAlerts')}
           value={settings.longLifeAlerts}

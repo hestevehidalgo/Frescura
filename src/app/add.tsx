@@ -39,7 +39,8 @@ type Entry = {
   quantity: number;
   location: Location;
   ripe: boolean | null;
-  priceClp: number | null;
+  /** Precio tal como lo escribe el usuario ("1290" o "$1.290"). */
+  priceText: string;
 };
 
 let keySequence = 0;
@@ -65,7 +66,6 @@ export default function AddScreen() {
   const [basket, setBasket] = useState<Entry[]>([]);
   const [daysAgo, setDaysAgo] = useState(0);
   const [quantityFor, setQuantityFor] = useState<Entry | null>(null);
-  const [priceText, setPriceText] = useState('');
   const [categoryFor, setCategoryFor] = useState<string | null>(null);
   const [leftoversOpen, setLeftoversOpen] = useState(false);
   const [leftoversName, setLeftoversName] = useState('');
@@ -115,7 +115,7 @@ export default function AddScreen() {
           quantity: step,
           location: product.storage,
           ripe: null,
-          priceClp: null,
+          priceText: '',
         },
       ];
     });
@@ -134,11 +134,10 @@ export default function AddScreen() {
         quantity: defaultQuantity(product),
         location: product.storage,
         ripe: null,
-        priceClp: null,
+        priceText: '',
       };
       setBasket((prev) => [...prev, entry as Entry]);
     }
-    setPriceText(entry.priceClp ? String(entry.priceClp) : '');
     setQuantityFor(entry);
   };
 
@@ -155,7 +154,7 @@ export default function AddScreen() {
           location: entry.location,
           purchasedAt,
           ripe: entry.ripe ?? undefined,
-          priceClp: entry.priceClp,
+          priceClp: parseClp(entry.priceText),
         });
         ids.push(item.id);
       }
@@ -313,7 +312,6 @@ export default function AddScreen() {
                   <Pressable
                     accessibilityRole="button"
                     onPress={() => {
-                      setPriceText(entry.priceClp ? String(entry.priceClp) : '');
                       setQuantityFor(entry);
                     }}
                     style={styles.flex}>
@@ -331,6 +329,25 @@ export default function AddScreen() {
                   </Pressable>
                 </View>
                 <View style={styles.basketChips}>
+                  <TextInput
+                    value={entry.priceText}
+                    onChangeText={(priceText) => updateEntry(entry.key, { priceText })}
+                    placeholder={t('add.pricePlaceholder')}
+                    placeholderTextColor={c.textMuted}
+                    keyboardType="number-pad"
+                    accessibilityLabel={t('add.priceOf', { name: entry.displayName })}
+                    style={[
+                      styles.priceInput,
+                      {
+                        color: c.text,
+                        backgroundColor: c.background,
+                        borderColor:
+                          entry.priceText && parseClp(entry.priceText) === null
+                            ? c.dangerFg
+                            : c.border,
+                      },
+                    ]}
+                  />
                   <Chip
                     icon={LOCATION_ICON[entry.location]}
                     label={t(`locations.${entry.location}`)}
@@ -391,26 +408,7 @@ export default function AddScreen() {
             unit={quantityFor.product.unit}
             onChange={(quantity) => updateEntry(quantityFor.key, { quantity })}
           />
-          <ThemedText variant="muted">{t('add.price')}</ThemedText>
-          <TextInput
-            value={priceText}
-            onChangeText={setPriceText}
-            placeholder={t('edit.pricePlaceholder')}
-            placeholderTextColor={c.textMuted}
-            keyboardType="number-pad"
-            accessibilityLabel={t('add.price')}
-            style={[
-              styles.input,
-              { color: c.text, borderColor: c.border, backgroundColor: c.background },
-            ]}
-          />
-          <Button
-            label={t('common.save')}
-            onPress={() => {
-              updateEntry(quantityFor.key, { priceClp: parseClp(priceText) });
-              setQuantityFor(null);
-            }}
-          />
+          <Button label={t('common.done')} onPress={() => setQuantityFor(null)} />
         </Sheet>
       )}
 
@@ -548,7 +546,15 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     minHeight: MIN_TOUCH - 8,
   },
-  basketChips: { flexDirection: 'row', gap: spacing.sm, marginLeft: 36 },
+  basketChips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginLeft: 36 },
+  priceInput: {
+    minHeight: MIN_TOUCH - 4,
+    width: 110,
+    borderWidth: 1,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.md,
+    fontSize: 15,
+  },
   basketName: { fontSize: 16, fontWeight: '600' },
   remove: { minWidth: MIN_TOUCH - 8, alignItems: 'center' },
   purchasedRow: { gap: spacing.xs },

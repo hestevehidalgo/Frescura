@@ -1,10 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { memo, useRef } from 'react';
+import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import ReanimatedSwipeable, {
-  SwipeDirection,
-  type SwipeableMethods,
-} from 'react-native-gesture-handler/ReanimatedSwipeable';
 
 import { ThemedText } from '@/components/themed-text';
 import type { InventoryItem } from '@/db/inventory-repo';
@@ -30,25 +26,33 @@ type Props = {
   onDiscard: (item: InventoryItem) => void;
 };
 
-function SwipeAction({ side }: { side: 'ate' | 'discard' }) {
+function RowButton({
+  kind,
+  label,
+  onPress,
+}: {
+  kind: 'ate' | 'discard';
+  label: string;
+  onPress: () => void;
+}) {
   const c = useThemeColors();
-  const ate = side === 'ate';
+  const ate = kind === 'ate';
   return (
-    <View
-      style={[
-        styles.action,
-        ate ? styles.actionLeft : styles.actionRight,
-        { backgroundColor: ate ? c.okBg : c.dangerBg },
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      hitSlop={4}
+      style={({ pressed }) => [
+        styles.rowButton,
+        { backgroundColor: ate ? c.okBg : c.dangerBg, opacity: pressed ? 0.7 : 1 },
       ]}>
       <Ionicons
-        name={ate ? 'checkmark-circle' : 'trash'}
+        name={ate ? 'checkmark' : 'trash-outline'}
         size={22}
         color={ate ? c.okFg : c.dangerFg}
       />
-      <ThemedText style={[styles.actionText, { color: ate ? c.okFg : c.dangerFg }]}>
-        {t(ate ? 'actions.ate' : 'actions.discarded')}
-      </ThemedText>
-    </View>
+    </Pressable>
   );
 }
 
@@ -64,7 +68,6 @@ function ItemRowBase({
   onDiscard,
 }: Props) {
   const c = useThemeColors();
-  const swipeable = useRef<SwipeableMethods>(null);
   const { item, urgency } = row;
 
   const details = [
@@ -73,7 +76,7 @@ function ItemRowBase({
     t(`expiry.source.${item.expirySource}`),
   ].join(' · ');
 
-  const content = (
+  return (
     <Pressable
       onPress={() => onPress(item)}
       onLongPress={() => onLongPress(item)}
@@ -81,7 +84,6 @@ function ItemRowBase({
       accessibilityRole="button"
       accessibilityState={selecting ? { selected } : undefined}
       accessibilityLabel={`${item.displayName}, ${relativeExpiryLabel(item.expiresAt, today)}, ${details}`}
-      accessibilityHint={selecting ? undefined : t('home.swipeHint')}
       accessibilityActions={[
         { name: 'ate', label: t('actions.ate') },
         { name: 'discard', label: t('actions.discarded') },
@@ -113,6 +115,9 @@ function ItemRowBase({
         <ThemedText variant="muted" style={styles.details} numberOfLines={1}>
           {details}
         </ThemedText>
+        <View style={styles.pill}>
+          <ExpiryPill expiresAt={item.expiresAt} urgency={urgency} today={today} />
+        </View>
         {row.lotCount > 1 && (
           <ThemedText style={[styles.lot, { color: row.useFirst ? c.primary : c.textMuted }]}>
             {row.useFirst
@@ -121,35 +126,21 @@ function ItemRowBase({
           </ThemedText>
         )}
       </View>
-      <ExpiryPill expiresAt={item.expiresAt} urgency={urgency} today={today} />
+      {!selecting && (
+        <View style={styles.buttons}>
+          <RowButton
+            kind="ate"
+            label={`${t('actions.ate')}: ${item.displayName}`}
+            onPress={() => onAte(item)}
+          />
+          <RowButton
+            kind="discard"
+            label={`${t('actions.discarded')}: ${item.displayName}`}
+            onPress={() => onDiscard(item)}
+          />
+        </View>
+      )}
     </Pressable>
-  );
-
-  if (selecting) {
-    return content;
-  }
-
-  return (
-    <ReanimatedSwipeable
-      ref={swipeable}
-      friction={2}
-      leftThreshold={80}
-      rightThreshold={80}
-      overshootLeft={false}
-      overshootRight={false}
-      renderLeftActions={() => <SwipeAction side="ate" />}
-      renderRightActions={() => <SwipeAction side="discard" />}
-      onSwipeableOpen={(direction) => {
-        swipeable.current?.close();
-        // Deslizar a la derecha abre las acciones de la izquierda: "Me lo comí".
-        if (direction === SwipeDirection.RIGHT) {
-          onAte(item);
-        } else {
-          onDiscard(item);
-        }
-      }}>
-      {content}
-    </ReanimatedSwipeable>
   );
 }
 
@@ -176,14 +167,13 @@ const styles = StyleSheet.create({
   name: { fontSize: 17, fontWeight: '600' },
   details: { fontSize: 13, lineHeight: 18 },
   lot: { fontSize: 13, lineHeight: 18, fontWeight: '600' },
-  action: {
-    flex: 1,
-    flexDirection: 'row',
+  pill: { flexDirection: 'row', marginTop: 2 },
+  buttons: { flexDirection: 'row', gap: spacing.sm },
+  rowButton: {
+    width: MIN_TOUCH,
+    height: MIN_TOUCH,
+    borderRadius: radius.pill,
     alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
+    justifyContent: 'center',
   },
-  actionLeft: { justifyContent: 'flex-start' },
-  actionRight: { justifyContent: 'flex-end' },
-  actionText: { fontWeight: '700' },
 });

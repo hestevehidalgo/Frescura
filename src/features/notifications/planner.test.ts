@@ -2,7 +2,7 @@ import type { InventoryItem } from '@/db/inventory-repo';
 import { DEFAULT_SETTINGS, type Settings } from '@/db/settings-repo';
 import { getCatalogProduct } from '@/features/catalog/catalog';
 
-import { IOS_LIMIT, isQuietTime, planNotifications } from './planner';
+import { IOS_LIMIT, PLAN_WEEKS, isQuietTime, planNotifications } from './planner';
 
 let n = 0;
 function item(
@@ -20,7 +20,7 @@ function item(
     unit: 'un',
     location: 'fridge',
     priceClp: null,
-    purchasedAt: '2026-11-01',
+    purchasedAt: '2026-10-25',
     expiresAt,
     latestAt: null,
     expirySource: 'estimated',
@@ -39,8 +39,9 @@ function item(
   };
 }
 
-const TODAY = '2026-11-10';
-const NOW = new Date('2026-11-10T12:00:00-03:00'); // mediodía en Chile
+// Jueves 29 de octubre de 2026 al mediodía en Chile. El próximo domingo es el 1 de noviembre.
+const TODAY = '2026-10-29';
+const NOW = new Date('2026-10-29T12:00:00-03:00');
 
 function plan(items: InventoryItem[], settings: Partial<Settings> = {}, today = TODAY, now = NOW) {
   return planNotifications({
@@ -52,65 +53,68 @@ function plan(items: InventoryItem[], settings: Partial<Settings> = {}, today = 
   });
 }
 
-describe('resumen diario', () => {
+describe('resumen semanal', () => {
   it('no manda nada si no hay nada por vencer', () => {
     expect(plan([])).toEqual([]);
     expect(plan([item('arroz', '2027-06-01', { location: 'pantry' })])).toEqual([]);
   });
 
-  it('un solo resumen al día con lo que vence pronto', () => {
-    const summaries = plan([
-      item('pollo-trozos', '2026-11-11'),
-      item('yogur', '2026-11-12'),
-      item('espinaca', '2026-11-12'),
-    ]).filter((p) => p.kind === 'summary');
-    const first = summaries[0];
-    expect(first?.date.toISOString()).toBe('2026-11-10T21:30:00.000Z'); // 18:30 en Chile
-    expect(first?.title).toBe('3 cosas vencen pronto');
-    expect(first?.body).toBe(
-      'Pollo en trozos (mañana), espinaca (en 2 días) y yogur (en 2 días). Ver recetas →',
-    );
+  it('un aviso el domingo a las 10:00 con lo que vence esa semana', () => {
+    const result = plan([
+      item('pollo-trozos', '2026-11-02'),
+      item('yogur', '2026-11-04'),
+      item('espinaca', '2026-11-01'),
+      item('lechuga', '2026-11-08'), // ya es la semana siguiente
+    ]);
+    const first = result[0];
+    expect(first?.id).toBe('summary-2026-11-01');
+    expect(first?.date.toISOString()).toBe('2026-11-01T13:00:00.000Z'); // 10:00 en Chile (verano)
+    expect(first?.title).toBe('3 productos vencen esta semana');
+    expect(first?.body).toBe('Espinaca (hoy), pollo en trozos (lunes) y yogur (miércoles).');
     expect(first?.itemId).toBeNull();
-    // Un aviso por día como máximo.
-    expect(new Set(summaries.map((s) => s.id)).size).toBe(summaries.length);
+    expect(result[1]?.id).toBe('summary-2026-11-08');
+    expect(result[1]?.title).toBe('Esta semana vence: Lechuga');
   });
 
   it('con un solo producto permite responder desde el aviso', () => {
-    const [first] = plan([item('yogur', '2026-11-11')]);
-    expect(first?.title).toBe('Yogur vence mañana');
+    const [first] = plan([item('yogur', '2026-11-03')]);
     expect(first?.categoryId).toBe('single_item');
-    expect(first?.itemId).toBeDefined();
+    expect(first?.itemId).not.toBeNull();
   });
 
-  it('respeta los días de anticipación', () => {
-    const items = [item('yogur', '2026-11-13')];
-    expect(plan(items, { daysAhead: 2 })[0]?.id).toBe('summary-2026-11-11');
-    expect(plan(items, { daysAhead: 3 })[0]?.id).toBe('summary-2026-11-10');
+  it('respeta el día elegido', () => {
+    const [first] = plan([item('yogur', '2026-11-05')], { summaryWeekday: 3 });
+    // El próximo miércoles es el 4 de noviembre.
+    expect(first?.id).toBe('summary-2026-11-04');
   });
 
-  it('si ya pasó la hora de hoy, parte mañana', () => {
-    const late = new Date('2026-11-10T20:00:00-03:00');
-    const result = plan([item('yogur', '2026-11-11')], {}, TODAY, late);
-    expect(result[0]?.id).toBe('summary-2026-11-11');
-    expect(result[0]?.title).toBe('Yogur vence hoy');
+  it('si hoy es el día y ya pasó la hora, parte la semana siguiente', () => {
+    const sunday = new Date('2026-11-01T15:00:00-03:00');
+    const result = plan(
+      [item('yogur', '2026-11-02'), item('lechuga', '2026-11-09')],
+      {},
+      '2026-11-01',
+      sunday,
+    );
+    expect(result.map((p) => p.id)).toEqual(['summary-2026-11-08']);
   });
 
   it('no avisa lo congelado, lo silenciado ni la larga duración', () => {
-    expect(plan([item('carne-molida', '2026-11-11', { location: 'freezer' })])).toEqual([]);
-    expect(plan([item('yogur', '2026-11-11')], { mutedCategories: ['lacteos'] })).toEqual([]);
-    expect(plan([item('arroz', '2026-11-11', { location: 'pantry' })])).toEqual([]);
+    expect(plan([item('carne-molida', '2026-11-02', { location: 'freezer' })])).toEqual([]);
+    expect(plan([item('yogur', '2026-11-02')], { mutedCategories: ['lacteos'] })).toEqual([]);
+    expect(plan([item('arroz', '2026-11-02', { location: 'pantry' })])).toEqual([]);
     expect(
-      plan([item('arroz', '2026-11-11', { location: 'pantry' })], { longLifeAlerts: true }),
-    ).toHaveLength(2);
+      plan([item('arroz', '2026-11-02', { location: 'pantry' })], { longLifeAlerts: true }),
+    ).toHaveLength(1);
   });
 
   it('el interruptor general apaga todo', () => {
-    expect(plan([item('yogur', '2026-11-11')], { notificationsEnabled: false })).toEqual([]);
+    expect(plan([item('yogur', '2026-11-02')], { notificationsEnabled: false })).toEqual([]);
   });
 
   it('lista hasta tres y resume el resto', () => {
     const items = ['yogur', 'lechuga', 'espinaca', 'frutilla', 'crema'].map((id) =>
-      item(id, '2026-11-11'),
+      item(id, '2026-11-03'),
     );
     expect(plan(items)[0]?.body).toContain('y 2 más');
   });
@@ -124,53 +128,32 @@ describe('horario silencioso', () => {
   });
 
   it('nunca programa de noche', () => {
-    const [first] = plan([item('yogur', '2026-11-11')], { summaryHour: 23, summaryMinute: 0 });
-    expect(first?.date.getHours()).toBe(21);
-    expect(first?.date.getMinutes()).toBe(45);
-  });
-});
-
-describe('aviso de la mañana', () => {
-  it('solo para carnes, pollo y pescados que vencen ese día', () => {
-    const result = plan([item('pollo-trozos', '2026-11-11'), item('yogur', '2026-11-11')]);
-    const morning = result.filter((p) => p.kind === 'morning');
-    expect(morning.map((p) => p.id)).toEqual(['morning-2026-11-11']);
-    expect(morning[0]?.title).toBe('Hoy vence pollo en trozos');
-    expect(morning[0]?.date.toISOString()).toBe('2026-11-11T12:00:00.000Z'); // 9:00 en Chile
-  });
-
-  it('se puede apagar', () => {
-    const result = plan([item('pollo-trozos', '2026-11-11')], { morningAlert: false });
-    expect(result.every((p) => p.kind === 'summary')).toBe(true);
+    const [first] = plan([item('yogur', '2026-11-02')], { summaryHour: 6, summaryMinute: 0 });
+    expect(first?.date.getHours()).toBe(8);
+    expect(first?.date.getMinutes()).toBe(0);
   });
 });
 
 describe('cambio de horario y límite de iOS', () => {
-  it('sigue saliendo a las 18:30 cuando Chile adelanta la hora', () => {
-    // El 6 de septiembre de 2026 Chile pasa de UTC-4 a UTC-3.
-    const items = ['2026-09-05', '2026-09-06', '2026-09-07'].map((d) => item('yogur', d));
-    const result = plan(
-      items,
-      { daysAhead: 1, morningAlert: false },
-      '2026-09-04',
-      new Date('2026-09-04T12:00:00-04:00'),
-    );
+  it('sigue saliendo a las 10:00 cuando Chile atrasa la hora', () => {
+    // El 5 de abril de 2026 Chile pasa de UTC-3 a UTC-4. Los domingos 29 mar y 5 abr.
+    const items = [item('yogur', '2026-03-30'), item('lechuga', '2026-04-06')];
+    const result = plan(items, {}, '2026-03-26', new Date('2026-03-26T12:00:00-03:00'));
     expect(result.map((p) => [p.id, p.date.getHours(), p.date.getMinutes()])).toEqual([
-      ['summary-2026-09-04', 18, 30],
-      ['summary-2026-09-05', 18, 30],
-      ['summary-2026-09-06', 18, 30],
-      ['summary-2026-09-07', 18, 30],
+      ['summary-2026-03-29', 10, 0],
+      ['summary-2026-04-05', 10, 0],
     ]);
-    expect(result[1]?.date.toISOString()).toBe('2026-09-05T22:30:00.000Z');
-    expect(result[2]?.date.toISOString()).toBe('2026-09-06T21:30:00.000Z');
+    expect(result[0]?.date.toISOString()).toBe('2026-03-29T13:00:00.000Z');
+    expect(result[1]?.date.toISOString()).toBe('2026-04-05T14:00:00.000Z');
   });
 
-  it('nunca supera el límite de 64 avisos programados', () => {
-    const items = Array.from({ length: 40 }, (_, i) =>
-      item('pollo-trozos', `2026-11-${String(10 + (i % 14)).padStart(2, '0')}`),
-    );
-    const result = plan(items, { daysAhead: 3 });
-    expect(result.length).toBeLessThanOrEqual(IOS_LIMIT);
-    expect(result.length).toBeLessThanOrEqual(28);
+  it('programa como máximo unas pocas semanas, muy lejos del límite de 64', () => {
+    const items = Array.from({ length: 60 }, (_, i) => {
+      const day = new Date(Date.UTC(2026, 10, 1 + i)).toISOString().slice(0, 10);
+      return item('yogur', day);
+    });
+    const result = plan(items);
+    expect(result.length).toBe(PLAN_WEEKS);
+    expect(result.length).toBeLessThan(IOS_LIMIT);
   });
 });

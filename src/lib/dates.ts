@@ -77,6 +77,16 @@ export function maxDate(a: IsoDate, b: IsoDate): IsoDate {
   return a >= b ? a : b;
 }
 
+/** Día de la semana: 0 = domingo, 1 = lunes, … 6 = sábado. */
+export function weekdayOf(date: IsoDate): number {
+  return new Date(toUtcMs(date)).getUTCDay();
+}
+
+/** Primera fecha desde `from` (incluida) que cae en el día de la semana pedido. */
+export function nextWeekday(from: IsoDate, weekday: number): IsoDate {
+  return addDays(from, (weekday - weekdayOf(from) + 7) % 7);
+}
+
 /** Lunes de la semana de `date` (en Chile la semana parte el lunes). */
 export function startOfWeek(date: IsoDate): IsoDate {
   const weekday = new Date(toUtcMs(date)).getUTCDay(); // 0 = domingo

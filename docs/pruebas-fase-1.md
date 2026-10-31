@@ -13,9 +13,9 @@ a la hora elegida y que no se pierda nada al cerrar o reiniciar el celular.**
 ## Agregar productos
 
 - [ ] Inicio vacío muestra "Tu refri está vacío (por ahora)" y el botón "Agregar productos".
-- [ ] En Agregar, tocar Palta suma 1 (aparece un número verde en la baldosa).
-- [ ] Mantener presionado Tomate abre "¿Cuánto compraste?": cambia la cantidad y pon un precio
-      (ej: $1.290).
+- [ ] El botón **+** de arriba abre Agregar. Tocar Palta suma 1 (aparece un número verde).
+- [ ] Mantener presionado Tomate abre "¿Cuánto compraste?" para cambiar la cantidad.
+- [ ] En "Para guardar", cada producto tiene un campo de precio (escribe 1290 o $1.290).
 - [ ] Escribir "leche" en el buscador muestra sugerencias; tocar una la agrega.
 - [ ] Escribir algo que no existe (ej: "quinoa") permite "Agregar «Quinoa»" y elegir la categoría.
 - [ ] "Guardé sobras" → escribir "cazuela" agrega "Sobras de cazuela".
@@ -23,8 +23,8 @@ a la hora elegida y que no se pierda nada al cerrar o reiniciar el celular.**
       tomate aparece "¿Madura?".
 - [ ] "Lo compré: Ayer" cambia la fecha de compra.
 - [ ] "Guardar N productos" vuelve a Inicio y muestra "Agregaste N productos · Deshacer".
-- [ ] La primera vez aparece "¿Te aviso antes de que algo venza?". Responde **Sí, avísame** y
-      acepta el permiso del iPhone.
+- [ ] La primera vez aparece "¿Quieres un resumen semanal?". Responde **Sí, quiero el
+      resumen** y acepta el permiso del iPhone.
 
 ## Inicio
 
@@ -33,8 +33,8 @@ a la hora elegida y que no se pierda nada al cerrar o reiniciar el celular.**
 - [ ] "Hoy cocina con esto" muestra los 3 que vencen primero.
 - [ ] Los filtros Refri / Congelador / Despensa funcionan.
 - [ ] El buscador encuentra sin tildes (escribe "platano").
-- [ ] **Deslizar a la derecha** = "Me lo comí" (aparece "¡bien aprovechado!" con Deshacer).
-- [ ] **Deslizar a la izquierda** = pregunta por qué lo botaste.
+- [ ] El botón **✓** de un producto lo marca como consumido (aparece un aviso con Deshacer).
+- [ ] El botón **🗑** pregunta por qué lo botaste.
 - [ ] **Deshacer** dentro de 5 segundos devuelve el producto.
 - [ ] **Mantener presionado** abre el menú: Usé una parte, Lo abrí, Lo congelé, Cambiar fecha,
       Cambiar lugar, Dividir en dos, Editar, Ver detalle.
@@ -62,14 +62,14 @@ a la hora elegida y que no se pierda nada al cerrar o reiniciar el celular.**
 - [ ] Si no lo conoce, permite escribir el nombre y elegir la categoría. La segunda vez que
       escaneas el mismo producto, lo reconoce al tiro (sin internet).
 
-## Avisos (durante la semana)
+## Resumen semanal
 
-- [ ] En Ajustes, deja la hora del resumen a una hora que te acomode.
-- [ ] Recibes **un solo** resumen al día a esa hora, y solo los días en que algo vence pronto.
+- [ ] En Ajustes, elige el día y la hora del resumen (por defecto domingo a las 10:00).
+- [ ] Ese día recibes **un solo** aviso con lo que vence en los próximos 7 días. Si no vence
+      nada, no llega nada.
 - [ ] Nunca llega un aviso de noche (horario silencioso 22:00 a 08:00).
-- [ ] Si hay carne o pollo que vence ese día, llega un aviso extra a las 9:00.
 - [ ] Al mantener presionado un aviso de un solo producto aparecen "Me lo comí" y "Lo boté".
-- [ ] Apagar "Resumen diario" en Ajustes hace que dejen de llegar.
+- [ ] Apagar "Resumen semanal" en Ajustes hace que deje de llegar.
 
 ## Nada se pierde
 

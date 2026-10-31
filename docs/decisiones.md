@@ -4,6 +4,20 @@ Registro de decisiones técnicas y de producto, con su motivo. Lo más reciente 
 
 ## 2026-10-31 · Ajustes pedidos por el dueño
 
+### Respuestas a las 30 preguntas
+
+Ver `docs/ideas.md`. Cambios aplicados:
+
+- **Resumen semanal en vez de diario.** La app no debe ser invasiva: un aviso el domingo a las
+  10:00 (día y hora configurables), solo si algo vence en los próximos 7 días. Se quitó el aviso
+  de la mañana y la opción de días de anticipación.
+- **Botones visibles en vez de gestos.** Cada producto tiene botones ✓ (me lo comí) y 🗑 (lo
+  boté). Se quitó el deslizar: el dueño no lo encontró evidente.
+- **Agregar productos** pasó del botón flotante a un "+" en el encabezado, porque el botón
+  flotante tapaba los botones de la lista.
+- **Precio en cada producto** de "Para guardar".
+- **Tono serio** en los mensajes.
+
 ### Barra de pestañas: Escanear, Inicio, Recetas, Resumen
 
 El dueño pidió que Escanear no sobresalga: ahora es un círculo verde del mismo tamaño que los

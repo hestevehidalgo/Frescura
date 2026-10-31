@@ -1,15 +1,13 @@
 import type { Db } from './db';
 
 export type Settings = {
+  /** Resumen semanal: un solo aviso a la semana, y solo si algo vence esa semana. */
   notificationsEnabled: boolean;
-  /** Hora del resumen diario (por defecto 18:30, antes de cocinar). */
+  /** Día del resumen: 0 = domingo, 1 = lunes, … 6 = sábado. */
+  summaryWeekday: number;
+  /** Hora del resumen (por defecto domingo a las 10:00). */
   summaryHour: number;
   summaryMinute: number;
-  /** Con cuántos días de anticipación avisar (1, 2 o 3). */
-  daysAhead: 1 | 2 | 3;
-  /** Aviso extra en la mañana para carnes, pescados y mariscos que vencen ese día. */
-  morningAlert: boolean;
-  morningHour: number;
   /** Horario silencioso, en minutos desde la medianoche. */
   quietStart: number;
   quietEnd: number;
@@ -24,11 +22,9 @@ export type Settings = {
 
 export const DEFAULT_SETTINGS: Settings = {
   notificationsEnabled: true,
-  summaryHour: 18,
-  summaryMinute: 30,
-  daysAhead: 2,
-  morningAlert: true,
-  morningHour: 9,
+  summaryWeekday: 0,
+  summaryHour: 10,
+  summaryMinute: 0,
   quietStart: 22 * 60,
   quietEnd: 8 * 60,
   mutedCategories: [],

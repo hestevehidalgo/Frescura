@@ -245,18 +245,7 @@ export default function HomeScreen() {
             }}
           />
         </View>
-      ) : (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('home.addButton')}
-          onPress={() => router.push('/add')}
-          style={({ pressed }) => [
-            styles.fab,
-            { backgroundColor: c.accent, opacity: pressed ? 0.85 : 1 },
-          ]}>
-          <Ionicons name="add" size={32} color={c.onAccent} />
-        </Pressable>
-      )}
+      ) : null}
 
       <ItemActionSheet
         key={menu ? `${menu.item.id}-${menu.view}` : 'closed'}
@@ -308,21 +297,6 @@ const styles = StyleSheet.create({
   sectionCount: { fontSize: 15 },
   separator: { height: StyleSheet.hairlineWidth, marginLeft: 76 },
   listContent: { paddingBottom: 120 },
-  fab: {
-    position: 'absolute',
-    right: spacing.lg,
-    bottom: spacing.lg,
-    width: 60,
-    height: 60,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
-  },
   bulkBar: {
     position: 'absolute',
     left: 0,

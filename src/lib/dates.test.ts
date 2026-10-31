@@ -8,8 +8,10 @@ import {
   isIsoDate,
   makeDate,
   minDate,
+  nextWeekday,
   startOfWeek,
   todayLocal,
+  weekdayOf,
 } from './dates';
 
 describe('fechas sin hora', () => {
@@ -69,5 +71,15 @@ describe('formatos chilenos', () => {
     expect(formatDate('2026-11-05')).toBe('05/11/2026');
     expect(formatDayMonth('2026-11-05')).toBe('05/11');
     expect(formatShort('2026-11-05')).toBe('5 nov');
+  });
+});
+
+describe('días de la semana', () => {
+  it('calcula el día y el próximo domingo', () => {
+    // El 1 de noviembre de 2026 es domingo.
+    expect(weekdayOf('2026-11-01')).toBe(0);
+    expect(weekdayOf('2026-11-02')).toBe(1);
+    expect(nextWeekday('2026-10-29', 0)).toBe('2026-11-01');
+    expect(nextWeekday('2026-11-01', 0)).toBe('2026-11-01');
   });
 });
