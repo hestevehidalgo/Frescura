@@ -89,6 +89,15 @@ const MIGRATIONS: string[] = [
   ALTER TABLE receipts ADD COLUMN image_hash TEXT;
   CREATE INDEX receipts_image_hash ON receipts (image_hash);
   `,
+  // 3: recetas propias y recetas creadas con IA que el usuario guardó
+  `
+  CREATE TABLE user_recipes (
+    id TEXT PRIMARY KEY NOT NULL,
+    source TEXT NOT NULL,
+    json TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+  `,
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS.length;

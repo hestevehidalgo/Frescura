@@ -105,6 +105,25 @@ En PowerShell, dentro de la carpeta `Frescura`:
 
 Si algo falla, mándale a Claude una captura del mensaje que aparece en la app.
 
+## 9. Activar las recetas con IA (fase 3)
+
+Se hace una sola vez, después de los pasos anteriores.
+
+1. Crea la tabla de caché de recetas: en Supabase → **SQL Editor** → **New query**, pega el
+   contenido de `supabase/migrations/20261102000000_generated_recipes.sql` y toca **Run**. Debe
+   decir `Success. No rows returned`.
+2. En PowerShell, dentro de la carpeta `Frescura`, trae lo último y sube la función:
+   ```bash
+   git pull
+   ```
+   ```bash
+   npx supabase functions deploy generate-recipe --use-api
+   ```
+   Debe terminar con `Deployed Functions on project ...`. Si dice que no has iniciado sesión,
+   repite el paso 6.2.
+3. Prueba: en la app, **Recetas** → **Inventar receta**. Necesitas al menos dos productos en el
+   inventario que no estén vencidos ni congelados.
+
 ## Ver cuánto se está gastando
 
 En Supabase → **SQL Editor**, pega el contenido de `scripts/cost-report.sql` y toca **Run**.

@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
@@ -7,17 +7,22 @@ import type { InventoryItem } from '@/db/inventory-repo';
 import { relativeExpiryLabel } from '@/features/expiry/labels';
 import { t } from '@/i18n';
 import type { IsoDate } from '@/lib/dates';
-import { radius, spacing, useThemeColors } from '@/theme';
+import { MIN_TOUCH, radius, spacing, useThemeColors } from '@/theme';
 
-/** "Hoy cocina con esto": los 3 productos que vencen primero. */
+/** "Hoy cocina con esto": los 3 productos que vencen primero y la receta que mejor los usa. */
 export function CookTodayCard({
   items,
   today,
   emojiFor,
+  suggestion,
+  onPress,
 }: {
   items: InventoryItem[];
   today: IsoDate;
   emojiFor: (item: InventoryItem) => string;
+  /** Nombre de la receta sugerida, si hay una que use lo que vence. */
+  suggestion: string | null;
+  onPress: () => void;
 }) {
   const c = useThemeColors();
   if (items.length === 0) {
@@ -42,9 +47,15 @@ export function CookTodayCard({
           </ThemedText>
         </View>
       ))}
-      <ThemedText style={[styles.footer, { color: c.okFg }]}>
-        {t('home.cookTodayRecipes')}
-      </ThemedText>
+      <Pressable
+        accessibilityRole="button"
+        onPress={onPress}
+        style={({ pressed }) => [styles.cta, { opacity: pressed ? 0.7 : 1 }]}>
+        <ThemedText style={[styles.footer, { color: c.okFg }]}>
+          {suggestion ? t('recipes.suggestion', { title: suggestion }) : t('home.cookTodayRecipes')}
+        </ThemedText>
+        <Ionicons name="chevron-forward" size={18} color={c.okFg} />
+      </Pressable>
     </View>
   );
 }
@@ -102,7 +113,8 @@ const styles = StyleSheet.create({
   emoji: { fontSize: 20, lineHeight: 26 },
   name: { flex: 1, fontSize: 16, fontWeight: '600' },
   when: { fontSize: 14, fontWeight: '600' },
-  footer: { fontSize: 14 },
+  footer: { fontSize: 15, fontWeight: '600', flex: 1 },
+  cta: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, minHeight: MIN_TOUCH },
   buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   flex: { flexGrow: 1, minWidth: 96 },
 });

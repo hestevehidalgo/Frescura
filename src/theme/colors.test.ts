@@ -22,6 +22,12 @@ describe.each(['light', 'dark'] as const)('paleta %s', (scheme) => {
     ['neutralFg', 'neutralBg'],
     ['accent', 'surface'],
     ['primary', 'surface'],
+    // Recetas: estado de ingredientes y errores sobre el fondo o una tarjeta.
+    ['okFg', 'surface'],
+    ['okFg', 'background'],
+    ['warnFg', 'background'],
+    ['dangerFg', 'background'],
+    ['dangerFg', 'surface'],
   ] as const)('%s sobre %s cumple AA', (fg, bg) => {
     expect(contrastRatio(c[fg], c[bg])).toBeGreaterThanOrEqual(AA_TEXT);
   });

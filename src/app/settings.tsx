@@ -7,32 +7,25 @@ import { Chip, ChipRow } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
 import { useDb } from '@/db/provider';
 import { saveSettings, type Settings } from '@/db/settings-repo';
-import { allCategories, getCatalogProduct } from '@/features/catalog/catalog';
+import { allCategories } from '@/features/catalog/catalog';
 import { notifySettingsChanged, useSettings } from '@/features/inventory/store';
 import {
   hasNotificationPermission,
   requestNotificationPermission,
 } from '@/features/notifications/scheduler';
 import { WEEKDAY_KEYS } from '@/features/notifications/planner';
+import {
+  AllergenChips,
+  DietChips,
+  EquipmentChips,
+  PantryChips,
+} from '@/features/recipes/components/preference-chips';
 import { t } from '@/i18n';
 import { capitalize } from '@/lib/text';
 import { MIN_TOUCH, radius, spacing, useThemeColors } from '@/theme';
 
 // La semana parte el lunes.
 const WEEKDAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
-
-const PANTRY_OPTIONS = [
-  'sal',
-  'aceite',
-  'azucar',
-  'harina',
-  'ajo',
-  'cebolla',
-  'arroz',
-  'fideos',
-  'huevos',
-  'caldo',
-];
 
 function formatTime(minutes: number): string {
   const h = Math.floor(minutes / 60);
@@ -231,25 +224,18 @@ export default function SettingsScreen() {
         </ChipRow>
       </Section>
 
-      <Section title={t('settings.pantrySection')}>
+      <Section title={t('settings.kitchenSection')}>
+        <ThemedText style={styles.label}>{t('settings.dietLabel')}</ThemedText>
+        <DietChips settings={settings} onChange={(p) => void update(p)} />
+        <ThemedText style={styles.label}>{t('settings.avoidLabel')}</ThemedText>
+        <AllergenChips settings={settings} onChange={(p) => void update(p)} />
+        <ThemedText style={styles.label}>{t('settings.equipmentLabel')}</ThemedText>
+        <EquipmentChips settings={settings} onChange={(p) => void update(p)} />
+        <ThemedText style={styles.label}>{t('settings.pantrySection')}</ThemedText>
         <ThemedText variant="muted" style={styles.small}>
           {t('settings.pantryHint')}
         </ThemedText>
-        <ChipRow>
-          {PANTRY_OPTIONS.map((id) => {
-            const product = getCatalogProduct(id);
-            return product ? (
-              <Chip
-                key={id}
-                label={`${product.emoji} ${product.name}`}
-                selected={settings.pantryBasics.includes(id)}
-                onPress={() =>
-                  void update({ pantryBasics: toggleInList(settings.pantryBasics, id) })
-                }
-              />
-            ) : null;
-          })}
-        </ChipRow>
+        <PantryChips settings={settings} onChange={(p) => void update(p)} />
       </Section>
 
       <Section title={t('settings.aboutSection')}>
@@ -285,4 +271,5 @@ const styles = StyleSheet.create({
   },
   time: { fontSize: 24, fontWeight: '700', minWidth: 80, textAlign: 'center' },
   small: { fontSize: 14, lineHeight: 20 },
+  label: { fontWeight: '600' },
 });

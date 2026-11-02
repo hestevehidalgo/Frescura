@@ -23,6 +23,7 @@ import {
 } from '@/features/inventory/store';
 import { useItemActions } from '@/features/inventory/use-item-actions';
 import { NotificationPrompt } from '@/features/notifications/notification-prompt';
+import { useRankedRecipes } from '@/features/recipes/use-ranked-recipes';
 import { t, tn } from '@/i18n';
 import { addDays } from '@/lib/dates';
 import { MIN_TOUCH, radius, spacing, useThemeColors } from '@/theme';
@@ -39,6 +40,9 @@ export default function HomeScreen() {
   const { data: items, error, reload } = useActiveItems();
   const lookup = useProductLookup();
   const { run, runMany } = useItemActions();
+  const { ranked } = useRankedRecipes();
+  // La mejor receta que use algo que vence pronto y a la que falte como mucho un ingrediente.
+  const suggested = ranked.find((r) => r.expiring.length > 0 && r.missing.length <= 1);
 
   const [location, setLocation] = useState<Location | 'all'>('all');
   const [query, setQuery] = useState('');
@@ -125,7 +129,17 @@ export default function HomeScreen() {
           onDiscarded={() => setMenu({ item, view: 'discard' })}
         />
       ))}
-      <CookTodayCard items={home.cookToday} today={today} emojiFor={emojiFor} />
+      <CookTodayCard
+        items={home.cookToday}
+        today={today}
+        emojiFor={emojiFor}
+        suggestion={suggested?.recipe.t ?? null}
+        onPress={() =>
+          suggested
+            ? router.push({ pathname: '/recipe/[id]', params: { id: suggested.recipe.id } })
+            : router.push('/recipes')
+        }
+      />
       <View style={[styles.search, { backgroundColor: c.surface, borderColor: c.border }]}>
         <Ionicons name="search" size={18} color={c.textMuted} />
         <TextInput

@@ -1,9 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Link } from 'expo-router';
+import { Link, Redirect } from 'expo-router';
 import { Tabs } from 'expo-router/tabs';
 import type { ComponentProps } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { useSettings } from '@/features/inventory/store';
 import { t } from '@/i18n';
 import { MIN_TOUCH, radius, spacing, useThemeColors } from '@/theme';
 
@@ -65,6 +66,11 @@ export const unstable_settings = { initialRouteName: 'index' };
 
 export default function TabsLayout() {
   const colors = useThemeColors();
+  const { data: settings } = useSettings();
+  // La primera vez se pasa por la bienvenida (dieta, alergias, equipamiento).
+  if (settings && !settings.onboardingDone) {
+    return <Redirect href="/welcome" />;
+  }
   return (
     <Tabs
       screenOptions={{

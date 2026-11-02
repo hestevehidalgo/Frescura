@@ -1,3 +1,5 @@
+import type { Allergen, Diet } from '@/features/recipes/recipes';
+
 import type { Db } from './db';
 
 export type Settings = {
@@ -20,6 +22,12 @@ export type Settings = {
   notificationPromptAnswered: boolean;
   /** Aceptó que la foto de la boleta se envíe a la IA para leerla. */
   receiptPhotoConsent: boolean;
+  /** Recetas: dieta, alergias y equipamiento de la casa. */
+  diet: Diet;
+  avoidAllergens: Allergen[];
+  equipment: string[];
+  /** Ya pasó por la bienvenida. */
+  onboardingDone: boolean;
 };
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -34,6 +42,10 @@ export const DEFAULT_SETTINGS: Settings = {
   pantryBasics: ['sal', 'aceite', 'azucar', 'harina', 'ajo'],
   notificationPromptAnswered: false,
   receiptPhotoConsent: false,
+  diet: 'none',
+  avoidAllergens: [],
+  equipment: ['olla', 'sarten', 'horno', 'microondas'],
+  onboardingDone: false,
 };
 
 export async function getSettings(db: Db): Promise<Settings> {

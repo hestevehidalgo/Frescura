@@ -95,5 +95,26 @@ export function useItemActions() {
     [db, toast, undoAll],
   );
 
-  return { run, runMany };
+  /** Varias acciones distintas como una sola, con un único "Deshacer". */
+  const runEach = useCallback(
+    async (actions: { item: InventoryItem; action: ItemAction }[], message: string) => {
+      const handles: UndoHandle[] = [];
+      try {
+        for (const { item, action } of actions) {
+          handles.push(await performAction(db, item.id, action));
+        }
+        notifyInventoryChanged();
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        toast(message, () => undoAll(handles));
+        return true;
+      } catch {
+        await undoAll(handles);
+        toast(t('toasts.error'));
+        return false;
+      }
+    },
+    [db, toast, undoAll],
+  );
+
+  return { run, runMany, runEach };
 }

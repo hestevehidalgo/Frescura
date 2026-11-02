@@ -14,8 +14,10 @@ import {
 } from '@/db/inventory-repo';
 import { useDb } from '@/db/provider';
 import { listCustomProducts } from '@/db/products-repo';
+import { listUserRecipes } from '@/db/recipes-repo';
 import { getSettings, type Settings } from '@/db/settings-repo';
 import { getCatalogProduct, type Product } from '@/features/catalog/catalog';
+import { allBaseRecipes, type Recipe } from '@/features/recipes/recipes';
 import { todayLocal, type IsoDate } from '@/lib/dates';
 
 type Listener = () => void;
@@ -38,6 +40,11 @@ function createVersion() {
 
 const inventoryVersion = createVersion();
 const settingsVersion = createVersion();
+const recipesVersion = createVersion();
+
+export function notifyRecipesChanged(): void {
+  recipesVersion.bump();
+}
 
 export function notifyInventoryChanged(): void {
   inventoryVersion.bump();
@@ -118,6 +125,15 @@ export function useProductLookup(): (productId: string) => Product | undefined {
   return useCallback(
     (productId: string) => getCatalogProduct(productId) ?? data?.find((p) => p.id === productId),
     [data],
+  );
+}
+
+/** Recetas propias y guardadas, más el recetario base. */
+export function useAllRecipes(): Query<Recipe[]> {
+  return useQuery(
+    async (db) => [...(await listUserRecipes(db)), ...allBaseRecipes()],
+    recipesVersion,
+    'recipes',
   );
 }
 

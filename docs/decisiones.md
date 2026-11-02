@@ -2,6 +2,70 @@
 
 Registro de decisiones técnicas y de producto, con su motivo. Lo más reciente va arriba.
 
+## 2026-11-02 · Fase 3 (recetas)
+
+### Recetario base escrito durante el desarrollo, sin Batch API
+
+Las 61 recetas de `src/data/recipes.json` las redactó Claude durante el desarrollo, con
+cantidades, pasos y equipamiento. Costo de API: cero. Quedan pendientes de revisión del dueño, como
+la tabla de vida útil.
+
+### Dieta y alérgenos calculados desde los ingredientes
+
+"Vegetariana", "vegana" y los alérgenos (gluten, lactosa, huevo, pescado, mariscos, frutos
+secos) no se escriben a mano en cada receta: se calculan desde los productos del catálogo que usa.
+Así no se contradicen. Un alérgeno cuenta solo si todas las alternativas de un ingrediente lo
+tienen, y los ingredientes opcionales no cuentan. La app avisa que el filtro ayuda pero no
+garantiza nada.
+
+### Ranking en el celular, sin IA
+
+Puntaje = urgencia de lo que vence (hoy 5, en 1 a 3 días 4, en 4 a 7 días 2) + 3 × proporción de
+ingredientes que tienes − 3 × ingredientes que faltan. Lo vencido y lo congelado no suman: nunca se
+sugiere cocinar algo vencido. La penalización por faltantes subió de 1,5 a 3 porque con 1,5
+aparecían arriba recetas a las que faltaban tres cosas.
+
+### Recetas con IA: caché compartido, después cuota
+
+- **Qué se envía:** solo los nombres genéricos del catálogo de hasta 6 productos (los que vencen
+  antes), la dieta, las alergias, el equipamiento y las porciones. Nada de marcas ni datos de la
+  persona.
+- **Caché compartido** (`generated_recipes`): la llave es el SHA-256 del conjunto ordenado de
+  ingredientes + filtros. Si otra persona pidió lo mismo, la receta se entrega gratis y no gasta
+  cuota. Usar pocos ingredientes hace que el caché acierte más.
+- **Topes:** 5 recetas con IA al mes por usuario (variable `RECIPE_MONTHLY_LIMIT`), 3 llamadas por
+  minuto, `max_tokens` 1.200.
+- **Llamada:** la misma configuración que las boletas: salida estructurada con claves cortas,
+  razonamiento apagado, esfuerzo bajo y prompt de sistema en caché (unos 750 tokens, sobre el
+  mínimo de 512).
+- **Seguridad:** el prompt exige cocinar pollo y cerdo hasta que no queden rosados, prohíbe
+  conservas caseras, pescado crudo y huevo crudo, y respetar alergias. El servidor descarta
+  recetas que piden equipamiento que la persona no tiene, y la app muestra un aviso en toda
+  receta creada por IA.
+- **Costo estimado:** unos US$0,0002 por receta nueva (≈400 tokens de salida). Una receta del
+  caché cuesta cero.
+
+### Recetas propias
+
+La persona escribe ingredientes como "500 g carne molida" o "2 cebollas", uno por línea. La app
+entiende cantidad y unidad (con coma decimal y fracciones como 1/2) y enlaza el nombre con el
+catálogo, probando también el singular, para que el ranking sepa qué productos usa. Las recetas
+propias y las de IA guardadas viven en SQLite (`user_recipes`, migración 3), nunca en el servidor.
+
+### "Cociné esta receta" con Todo, La mitad o Nada
+
+Para cada producto del inventario que usa la receta se elige cuánto se usó. Todo se descuenta en
+una sola acción con un único "Deshacer". Por defecto está en "Todo".
+
+### Bienvenida de 3 pantallas, todas saltables
+
+Pregunta dieta, alergias, equipamiento y básicos de despensa, como pidió el dueño. Se puede
+cambiar después en Ajustes → Cocina.
+
+### Dependencias de la fase 3
+
+- `expo-keep-awake`: mantiene la pantalla encendida en el modo cocina. Viene en Expo Go.
+
 ## 2026-10-31 · Fase 2 (versión provisoria con foto)
 
 ### La foto va a la IA mientras no exista la versión instalada

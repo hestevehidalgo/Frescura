@@ -19,6 +19,6 @@ avisa a tiempo y sugiere recetas con lo que está por vencer.
 | 0    | Preparación: proyecto, herramientas, navegación | Aprobada  |
 | 1    | Inventario local sin IA                         | Aprobada  |
 | 2    | Escaneo de boletas                              | En curso  |
-| 3    | Recetas                                         | Pendiente |
+| 3    | Recetas                                         | En prueba |
 | 4    | Estadísticas y pulido                           | Pendiente |
 | 5    | Publicación                                     | Pendiente |

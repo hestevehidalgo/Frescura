@@ -45,6 +45,10 @@ export default function RootLayout() {
             <Stack screenOptions={{ headerBackTitle: t('common.back') }}>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen
+                name="welcome"
+                options={{ headerShown: false, gestureEnabled: false }}
+              />
+              <Stack.Screen
                 name="settings"
                 options={{ title: t('settings.title'), presentation: 'modal' }}
               />
@@ -55,6 +59,12 @@ export default function RootLayout() {
                 options={{ title: t('edit.title'), presentation: 'modal' }}
               />
               <Stack.Screen name="receipt-review" options={{ title: t('review.title') }} />
+              <Stack.Screen name="recipe/[id]" options={{ title: t('recipes.preview') }} />
+              <Stack.Screen name="cook/[id]" options={{ title: t('recipes.cookMode') }} />
+              <Stack.Screen
+                name="recipe-editor"
+                options={{ title: t('editor.title'), presentation: 'modal' }}
+              />
               <Stack.Screen
                 name="barcode"
                 options={{ title: t('barcode.title'), presentation: 'modal' }}

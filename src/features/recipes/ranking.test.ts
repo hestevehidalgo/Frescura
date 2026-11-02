@@ -1,43 +1,10 @@
-import type { InventoryItem } from '@/db/inventory-repo';
-import { getCatalogProduct } from '@/features/catalog/catalog';
+import { makeItem } from '@/db/test-items';
 
 import { rankRecipes, scoreRecipe, urgencyWeight, type RecipePreferences } from './ranking';
 import { allBaseRecipes, getBaseRecipe } from './recipes';
 
 const TODAY = '2026-11-02';
-let n = 0;
-function item(
-  productId: string,
-  expiresAt: string,
-  extra: Partial<InventoryItem> = {},
-): InventoryItem {
-  n += 1;
-  return {
-    id: `i-${n}`,
-    productId,
-    displayName: getCatalogProduct(productId)?.name ?? productId,
-    quantity: 1,
-    unit: 'un',
-    location: 'fridge',
-    priceClp: null,
-    purchasedAt: '2026-10-30',
-    expiresAt,
-    latestAt: null,
-    expirySource: 'estimated',
-    dateType: 'best_before',
-    openedAt: null,
-    frozenAt: null,
-    thawedAt: null,
-    status: 'active',
-    discardReason: null,
-    receiptId: null,
-    notes: null,
-    closedAt: null,
-    createdAt: '',
-    updatedAt: '',
-    ...extra,
-  };
-}
+const item = makeItem;
 
 const PREFS: RecipePreferences = {
   diet: 'none',
