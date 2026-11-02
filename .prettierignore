@@ -5,3 +5,4 @@ package-lock.json
 assets
 SPEC.md
 src/data/catalog.json
+src/data/recipes.json
