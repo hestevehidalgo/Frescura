@@ -16,8 +16,10 @@ import { useDb } from '@/db/provider';
 import { listCustomProducts } from '@/db/products-repo';
 import { listUserRecipes } from '@/db/recipes-repo';
 import { getSettings, type Settings } from '@/db/settings-repo';
+import { loadStatsData } from '@/db/stats-repo';
 import { getCatalogProduct, type Product } from '@/features/catalog/catalog';
 import { allBaseRecipes, type Recipe } from '@/features/recipes/recipes';
+import type { StatsData } from '@/features/stats/stats';
 import { todayLocal, type IsoDate } from '@/lib/dates';
 
 type Listener = () => void;
@@ -135,6 +137,11 @@ export function useAllRecipes(): Query<Recipe[]> {
     recipesVersion,
     'recipes',
   );
+}
+
+/** Todos los productos (también los cerrados) y sus eventos, para el resumen y los precios. */
+export function useStatsData(): Query<StatsData> {
+  return useQuery(loadStatsData, inventoryVersion, 'stats-data');
 }
 
 export function useSettings(): Query<Settings> {

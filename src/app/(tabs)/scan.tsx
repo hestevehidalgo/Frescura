@@ -9,7 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { isBackendConfigured } from '@/config/backend';
 import { useDb } from '@/db/provider';
 import { findReceipt } from '@/db/receipts-repo';
-import { saveSettings } from '@/db/settings-repo';
+import { rememberAiQuota, saveSettings } from '@/db/settings-repo';
 import { notifySettingsChanged, useSettings, useToday } from '@/features/inventory/store';
 import { requestReceiptParse } from '@/features/receipts/api';
 import { captureReceipt } from '@/features/receipts/capture';
@@ -77,6 +77,9 @@ export default function ScanScreen() {
     }
     setState({ step: 'working', message: 'scan.steps.recognizing' });
     setScansLeft(result.scansLeft);
+    void rememberAiQuota(db, today.slice(0, 7), { scansLeft: result.scansLeft })
+      .then(notifySettingsChanged)
+      .catch(() => {});
     const review = buildReview(result.receipt, today, imageHash);
     if (review.rows.length === 0) {
       setState({ step: 'error', error: 'empty' });

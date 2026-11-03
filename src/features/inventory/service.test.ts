@@ -1,5 +1,11 @@
 import type { Db } from '@/db/db';
-import { archiveUnanswered, getItem, listEvents, listItems } from '@/db/inventory-repo';
+import {
+  archiveUnanswered,
+  getItem,
+  listEvents,
+  listItems,
+  priceBaseQuantity,
+} from '@/db/inventory-repo';
 import { migrate, SCHEMA_VERSION } from '@/db/migrations';
 import {
   createCustomProduct,
@@ -209,6 +215,22 @@ describe('acciones con deshacer', () => {
     const items = await listItems(db);
     expect(items).toHaveLength(1);
     expect(items[0]?.quantity).toBe(6);
+  });
+
+  it('al dividir, el lote nuevo lleva su parte del precio', async () => {
+    const item = await addToInventory(db, {
+      product: product('marraqueta'),
+      quantity: 10,
+      priceClp: 2000,
+    });
+    await performAction(db, item.id, { type: 'consume', quantity: 2 });
+    await performAction(db, item.id, { type: 'split', quantity: 4 });
+    const items = await listItems(db);
+    const child = items.find((i) => i.id !== item.id);
+    expect(child).toMatchObject({ quantity: 4, priceClp: 800 });
+    const parent = await getItem(db, item.id);
+    expect(parent).toMatchObject({ quantity: 4, priceClp: 2000 });
+    expect(parent && (await priceBaseQuantity(db, parent))).toBe(10);
   });
 
   it('deshacer un agregado lo borra', async () => {

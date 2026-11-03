@@ -11,6 +11,7 @@ import { ItemActionSheet } from '@/features/inventory/components/action-sheet';
 import { URGENCY_ICON, urgencyColors } from '@/features/inventory/components/expiry-pill';
 import { useItem, useProductLookup, useToday } from '@/features/inventory/store';
 import { useItemActions } from '@/features/inventory/use-item-actions';
+import { PriceHistory } from '@/features/stats/components/price-history';
 import { t } from '@/i18n';
 import { formatDate, formatShort, todayLocal } from '@/lib/dates';
 import { formatClp } from '@/lib/money';
@@ -139,6 +140,7 @@ export default function ItemDetailScreen() {
             </View>
           ))}
         </View>
+        <PriceHistory productId={item.productId} />
       </ScrollView>
       <ItemActionSheet
         key={menu ?? 'closed'}

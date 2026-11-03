@@ -210,6 +210,19 @@ export async function updateItem(
   return eventId;
 }
 
+/**
+ * Cantidad a la que corresponde el precio de un producto: lo que queda más lo que ya se comió,
+ * botó o separó en otro lote. El precio por unidad es `priceClp / priceBaseQuantity`.
+ */
+export async function priceBaseQuantity(db: Db, item: InventoryItem): Promise<number> {
+  const row = await db.getFirstAsync<{ used: number | null }>(
+    "SELECT SUM(-quantity_delta) AS used FROM item_events WHERE item_id = ? AND type IN ('consumed', 'discarded', 'split')",
+    [item.id],
+  );
+  const used = row?.used ?? 0;
+  return item.status === 'active' || item.status === 'unknown' ? item.quantity + used : used;
+}
+
 /** Separa una parte de un producto en un lote nuevo (por ejemplo, para congelar la mitad). */
 export async function splitItem(
   db: Db,
@@ -223,10 +236,17 @@ export async function splitItem(
     throw new Error('Cantidad inválida para dividir');
   }
   const at = nowTimestamp(now);
+  // El precio se reparte: el lote nuevo lleva la parte que le toca y el original conserva el
+  // suyo (que se calcula sobre la cantidad comprada). Así la plata no se cuenta dos veces.
+  const base = await priceBaseQuantity(db, before);
   const newItem: InventoryItem = {
     ...before,
     ...newItemPatch,
     id: newId(),
+    priceClp:
+      before.priceClp === null || base <= 0
+        ? null
+        : Math.round((before.priceClp * quantity) / base),
     quantity,
     createdAt: at,
     updatedAt: at,

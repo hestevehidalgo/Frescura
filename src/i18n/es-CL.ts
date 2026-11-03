@@ -11,6 +11,7 @@ export const esCL = {
   },
   common: {
     soon: 'Muy pronto',
+    loading: 'Cargando…',
     cancel: 'Cancelar',
     save: 'Guardar',
     done: 'Listo',
@@ -157,6 +158,20 @@ export const esCL = {
     decrease: 'Restar',
     pricePlaceholder: '$ precio',
     priceOf: 'Precio de {name}',
+    store: 'Dónde',
+    chooseStore: 'Elegir tienda',
+    storeTitle: '¿Dónde compraste?',
+    storeHint: 'Sirve para comparar precios entre supermercados.',
+    noStore: 'No decir',
+    otherStore: 'Otra tienda',
+    otherStorePlaceholder: 'Nombre de la tienda',
+    list: 'Dictar o escribir una lista',
+    listTitle: '¿Qué compraste?',
+    listHint:
+      'Escribe o dicta con el micrófono del teclado, separando con comas. Ej: dos tomates, un kilo de papas y leche.',
+    listPlaceholder: 'dos tomates, un kilo de papas y leche',
+    listAdd: 'Agregar a la lista',
+    listUnknown: 'No reconocimos: {list}. Búscalos arriba uno por uno.',
   },
   detail: {
     title: 'Detalle',
@@ -167,6 +182,7 @@ export const esCL = {
     openedOn: 'Abierto el {date}',
     frozenOn: 'Congelado el {date}',
     history: 'Historial',
+    prices: 'Precios que pagaste',
     notFound: 'Este producto ya no está en tu inventario.',
     events: {
       added: 'Agregado',
@@ -264,6 +280,33 @@ export const esCL = {
       'Las fechas estimadas se basan en FoodKeeper (USDA/FSIS, dominio público) y en estimaciones propias para productos chilenos. Son una orientación, nunca una garantía.',
     offCredit:
       'Los datos de códigos de barras vienen de Open Food Facts (openfoodfacts.org), bajo licencia ODbL.',
+    recipesCredit:
+      'Las recetas base son propias de Frescura. Las recetas con IA las crea Claude (Anthropic) y no reemplazan tu criterio.',
+    privacy:
+      'Tu inventario, tus compras y tus recetas viven solo en este celular. Al escanear una boleta o pedir una receta con IA se envía solo lo necesario, y no se guarda.',
+    dataSection: 'Tus datos',
+    quotaScans: {
+      one: 'Este mes te queda {n} escaneo de boleta.',
+      other: 'Este mes te quedan {n} escaneos de boleta.',
+    },
+    quotaRecipes: {
+      one: 'Este mes te queda {n} receta con IA.',
+      other: 'Este mes te quedan {n} recetas con IA.',
+    },
+    backupHint:
+      'Guarda un respaldo en Archivos, en tu correo o donde quieras. Sirve para pasar tus datos a otro celular.',
+    exportBackup: 'Guardar respaldo',
+    importBackup: 'Cargar respaldo',
+    importTitle: '¿Cargar este respaldo?',
+    importBody:
+      'Se reemplazan todos los datos de este celular por los del respaldo. No se puede deshacer.',
+    importConfirm: 'Sí, cargar',
+    importDone: { one: 'Respaldo cargado: {n} producto', other: 'Respaldo cargado: {n} productos' },
+    importInvalid: 'Ese archivo no es un respaldo de Frescura.',
+    importNewer:
+      'Ese respaldo es de una versión más nueva. Actualiza la app y vuelve a intentarlo.',
+    backupError: 'No se pudo completar. Inténtalo de nuevo.',
+    backupWebOnly: 'El respaldo está disponible en la app del celular.',
     version: 'Versión {version}',
     permissionDenied:
       'Las notificaciones están bloqueadas. Actívalas en Ajustes del iPhone → Notificaciones → Expo Go.',
@@ -459,6 +502,59 @@ export const esCL = {
   summary: {
     emptyTitle: 'Tu resumen del mes',
     emptyBody: 'Aquí vas a ver cuánta plata salvaste y cuánta comida aprovechaste.',
+    previousMonth: 'Mes anterior',
+    nextMonth: 'Mes siguiente',
+    saved: 'Plata salvada',
+    savedHint: 'Lo que te comiste cuando faltaban 3 días o menos para que venciera.',
+    wasted: 'Plata botada',
+    wastedHint: 'Lo que marcaste como "Lo boté", según su precio y la cantidad.',
+    used: 'Aprovechaste el {pct} % de la comida',
+    usedNone: 'Todavía no marcas nada como comido o botado este mes.',
+    usedDetail: { one: '{n} producto cerrado', other: '{n} productos cerrados' },
+    lessThanLast: '{amount} menos que en {month}',
+    moreThanLast: '{amount} más que en {month}',
+    sameAsLast: 'Igual que en {month}',
+    streak: {
+      one: 'Llevas {n} semana seguida sin botar comida',
+      other: 'Llevas {n} semanas seguidas sin botar comida',
+    },
+    tipsTitle: 'Consejos',
+    tips: {
+      freezePart: '{name}: botas el {pct} % de lo que compras. Congela una parte apenas llegues.',
+      buyLess: '{name}: botas el {pct} % de lo que compras. Prueba comprando menos cantidad.',
+      topWaste: 'Lo que más botaste este mes fue {category}: {amount}.',
+      markItems:
+        '{n} productos vencieron sin que marcaras qué pasó. Marcarlos hace que tu resumen sea exacto.',
+      addPrices:
+        'Más de la mitad de tus compras no tiene precio. Agrégalo al guardar para saber cuánto salvas.',
+      goodMonth: 'Aprovechaste el {pct} % de tu comida este mes. Buen trabajo.',
+    },
+    spentTitle: 'Gasto del mes',
+    spentTotal: 'Gastaste {amount}',
+    withoutPrice: { one: '{n} producto sin precio', other: '{n} productos sin precio' },
+    byCategory: 'Por categoría',
+    byStore: 'Por supermercado',
+    noStore: 'Sin tienda',
+    pricesTitle: 'Comparar precios',
+    pricesEmpty:
+      'Cuando compres el mismo producto en dos supermercados distintos, aquí verás dónde está más barato.',
+    cheaperAt: 'En {store} está {pct} % más barato',
+    perUnit: { kg: '{amount}/kg', l: '{amount}/l', un: '{amount} c/u' },
+    noMonthData: 'No hay movimientos en {month}.',
+  },
+  months: {
+    '01': 'enero',
+    '02': 'febrero',
+    '03': 'marzo',
+    '04': 'abril',
+    '05': 'mayo',
+    '06': 'junio',
+    '07': 'julio',
+    '08': 'agosto',
+    '09': 'septiembre',
+    '10': 'octubre',
+    '11': 'noviembre',
+    '12': 'diciembre',
   },
 } as const;
 

@@ -1,14 +1,23 @@
 import Constants from 'expo-constants';
 import { useEffect, useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
-import { Chip, ChipRow } from '@/components/button';
+import { Button, Chip, ChipRow } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
+import { useToast } from '@/components/undo-toast';
+import { parseBackup, restoreBackup, type Backup } from '@/db/backup';
 import { useDb } from '@/db/provider';
 import { saveSettings, type Settings } from '@/db/settings-repo';
 import { allCategories } from '@/features/catalog/catalog';
-import { notifySettingsChanged, useSettings } from '@/features/inventory/store';
+import { BACKUP_SUPPORTED, pickBackupText, shareBackup } from '@/features/backup/backup-file';
+import {
+  notifyInventoryChanged,
+  notifyRecipesChanged,
+  notifySettingsChanged,
+  useSettings,
+  useToday,
+} from '@/features/inventory/store';
 import {
   hasNotificationPermission,
   requestNotificationPermission,
@@ -20,7 +29,7 @@ import {
   EquipmentChips,
   PantryChips,
 } from '@/features/recipes/components/preference-chips';
-import { t } from '@/i18n';
+import { t, tn } from '@/i18n';
 import { capitalize } from '@/lib/text';
 import { MIN_TOUCH, radius, spacing, useThemeColors } from '@/theme';
 
@@ -97,6 +106,9 @@ export default function SettingsScreen() {
   const db = useDb();
   const { data: settings } = useSettings();
   const [permission, setPermission] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState(false);
+  const toast = useToast();
+  const today = useToday();
 
   useEffect(() => {
     hasNotificationPermission()
@@ -129,6 +141,60 @@ export default function SettingsScreen() {
 
   const toggleInList = (list: string[], value: string) =>
     list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
+
+  const quota = settings.aiQuota?.month === today.slice(0, 7) ? settings.aiQuota : null;
+
+  const exportData = async () => {
+    setBusy(true);
+    try {
+      if (!(await shareBackup(db))) {
+        toast(t('settings.backupError'));
+      }
+    } catch {
+      toast(t('settings.backupError'));
+    }
+    setBusy(false);
+  };
+
+  const restore = async (backup: Backup) => {
+    setBusy(true);
+    try {
+      const { items } = await restoreBackup(db, backup);
+      notifyInventoryChanged();
+      notifySettingsChanged();
+      notifyRecipesChanged();
+      toast(tn('settings.importDone', items));
+    } catch {
+      toast(t('settings.backupError'));
+    }
+    setBusy(false);
+  };
+
+  const importData = async () => {
+    let text: string | null;
+    try {
+      text = await pickBackupText();
+    } catch {
+      toast(t('settings.backupError'));
+      return;
+    }
+    if (text === null) {
+      return;
+    }
+    const backup = parseBackup(text);
+    if ('error' in backup) {
+      toast(t(backup.error === 'newer' ? 'settings.importNewer' : 'settings.importInvalid'));
+      return;
+    }
+    Alert.alert(t('settings.importTitle'), t('settings.importBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('settings.importConfirm'),
+        style: 'destructive',
+        onPress: () => void restore(backup),
+      },
+    ]);
+  };
 
   const alertCategories = allCategories().filter((cat) => cat.id !== 'otros');
   const version = Constants.expoConfig?.version ?? '';
@@ -238,9 +304,47 @@ export default function SettingsScreen() {
         <PantryChips settings={settings} onChange={(p) => void update(p)} />
       </Section>
 
+      <Section title={t('settings.dataSection')}>
+        <ThemedText style={styles.small}>{t('settings.privacy')}</ThemedText>
+        {quota?.scansLeft != null && (
+          <ThemedText style={styles.small}>{tn('settings.quotaScans', quota.scansLeft)}</ThemedText>
+        )}
+        {quota?.recipesLeft != null && (
+          <ThemedText style={styles.small}>
+            {tn('settings.quotaRecipes', quota.recipesLeft)}
+          </ThemedText>
+        )}
+        {BACKUP_SUPPORTED ? (
+          <>
+            <ThemedText variant="muted" style={styles.small}>
+              {t('settings.backupHint')}
+            </ThemedText>
+            <Button
+              icon="share-outline"
+              variant="secondary"
+              label={t('settings.exportBackup')}
+              disabled={busy}
+              onPress={() => void exportData()}
+            />
+            <Button
+              icon="download-outline"
+              variant="secondary"
+              label={t('settings.importBackup')}
+              disabled={busy}
+              onPress={() => void importData()}
+            />
+          </>
+        ) : (
+          <ThemedText variant="muted" style={styles.small}>
+            {t('settings.backupWebOnly')}
+          </ThemedText>
+        )}
+      </Section>
+
       <Section title={t('settings.aboutSection')}>
         <ThemedText style={styles.small}>{t('settings.aboutBody')}</ThemedText>
         <ThemedText style={styles.small}>{t('settings.offCredit')}</ThemedText>
+        <ThemedText style={styles.small}>{t('settings.recipesCredit')}</ThemedText>
         <ThemedText variant="muted" style={styles.small}>
           {t('settings.version', { version })}
         </ThemedText>

@@ -11,6 +11,8 @@ import { Sheet } from '@/components/sheet';
 import { ThemedText } from '@/components/themed-text';
 import { useToast } from '@/components/undo-toast';
 import { removeItems } from '@/db/inventory-repo';
+import { deleteReceipt, insertReceipt } from '@/db/receipts-repo';
+import { saveSettings } from '@/db/settings-repo';
 import { createCustomProduct, searchCustomProducts } from '@/db/products-repo';
 import { useDb } from '@/db/provider';
 import {
@@ -24,8 +26,15 @@ import {
 } from '@/features/catalog/catalog';
 import { LOCATION_ICON } from '@/features/inventory/components/action-sheet';
 import { addToInventory } from '@/features/inventory/service';
-import { notifyInventoryChanged, useToday } from '@/features/inventory/store';
-import { t, tn } from '@/i18n';
+import { parseSpokenList } from '@/features/inventory/spoken-list';
+import {
+  notifyInventoryChanged,
+  notifySettingsChanged,
+  useSettings,
+  useToday,
+} from '@/features/inventory/store';
+import { STORES } from '@/features/stats/stores';
+import { joinList, t, tn } from '@/i18n';
 import { addDays } from '@/lib/dates';
 import { parseClp } from '@/lib/money';
 import { formatQuantity } from '@/lib/quantity';
@@ -70,6 +79,15 @@ export default function AddScreen() {
   const [leftoversOpen, setLeftoversOpen] = useState(false);
   const [leftoversName, setLeftoversName] = useState('');
   const [saving, setSaving] = useState(false);
+  const { data: settings } = useSettings();
+  // undefined = la última tienda usada; null = sin tienda.
+  const [storeChoice, setStoreChoice] = useState<string | null | undefined>(undefined);
+  const store = storeChoice === undefined ? (settings?.lastStore ?? null) : storeChoice;
+  const [storeOpen, setStoreOpen] = useState(false);
+  const [otherStore, setOtherStore] = useState('');
+  const [listOpen, setListOpen] = useState(false);
+  const [listText, setListText] = useState('');
+  const [listUnknown, setListUnknown] = useState<string[]>([]);
   // Alto del panel "Para guardar", para que nunca tape la grilla.
   const [basketHeight, setBasketHeight] = useState(0);
 
@@ -145,7 +163,21 @@ export default function AddScreen() {
     setSaving(true);
     const purchasedAt = addDays(today, -daysAgo);
     const ids: string[] = [];
+    let receiptId: string | null = null;
     try {
+      // La tienda se guarda como una compra sin boleta: así sirve para comparar precios.
+      if (store) {
+        const receipt = await insertReceipt(db, {
+          chain: store,
+          issuerRut: null,
+          folio: null,
+          purchasedAt,
+          totalClp: null,
+          fingerprint: null,
+          imageHash: null,
+        });
+        receiptId = receipt.id;
+      }
       for (const entry of basket) {
         const item = await addToInventory(db, {
           product: entry.product,
@@ -155,13 +187,22 @@ export default function AddScreen() {
           purchasedAt,
           ripe: entry.ripe ?? undefined,
           priceClp: parseClp(entry.priceText),
+          receiptId,
         });
         ids.push(item.id);
       }
+      if (store !== (settings?.lastStore ?? null)) {
+        await saveSettings(db, { lastStore: store });
+        notifySettingsChanged();
+      }
       notifyInventoryChanged();
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      const savedReceipt = receiptId;
       toast(tn('toasts.added', ids.length), async () => {
         await removeItems(db, ids);
+        if (savedReceipt) {
+          await deleteReceipt(db, savedReceipt);
+        }
         notifyInventoryChanged();
       });
       router.back();
@@ -169,9 +210,27 @@ export default function AddScreen() {
       if (ids.length) {
         await removeItems(db, ids).catch(() => {});
       }
+      if (receiptId) {
+        await deleteReceipt(db, receiptId).catch(() => {});
+      }
       toast(t('toasts.error'));
       setSaving(false);
     }
+  };
+
+  const addList = () => {
+    const result = parseSpokenList(listText, defaultQuantity);
+    for (const entry of result.entries) {
+      addEntry(entry.product, entry.product.name, entry.quantity);
+    }
+    if (result.unknown.length > 0) {
+      setListText(result.unknown.join(', '));
+      setListUnknown(result.unknown);
+      return;
+    }
+    setListText('');
+    setListUnknown([]);
+    setListOpen(false);
   };
 
   const sobras = getCatalogProduct('sobras');
@@ -224,6 +283,13 @@ export default function AddScreen() {
             </Pressable>
           </View>
         )}
+
+        <Button
+          variant="secondary"
+          icon="mic-outline"
+          label={t('add.list')}
+          onPress={() => setListOpen(true)}
+        />
 
         <View style={styles.row}>
           <Button
@@ -389,6 +455,16 @@ export default function AddScreen() {
               />
             </ChipRow>
           </View>
+          <View style={styles.storeRow}>
+            <ThemedText variant="muted">{t('add.store')}</ThemedText>
+            <Chip
+              icon="storefront-outline"
+              label={store ?? t('add.chooseStore')}
+              selected={store !== null}
+              accessibilityLabel={`${t('add.storeTitle')} ${store ?? ''}`}
+              onPress={() => setStoreOpen(true)}
+            />
+          </View>
           <Button
             label={tn('add.save', basket.length)}
             icon="checkmark"
@@ -439,6 +515,84 @@ export default function AddScreen() {
             />
           ))}
         </ChipRow>
+      </Sheet>
+
+      <Sheet
+        visible={storeOpen}
+        onClose={() => setStoreOpen(false)}
+        title={t('add.storeTitle')}
+        subtitle={t('add.storeHint')}>
+        <ChipRow>
+          {STORES.map((name) => (
+            <Chip
+              key={name}
+              label={name}
+              selected={store === name}
+              onPress={() => {
+                setStoreChoice(name);
+                setStoreOpen(false);
+              }}
+            />
+          ))}
+          <Chip
+            label={t('add.noStore')}
+            selected={store === null}
+            onPress={() => {
+              setStoreChoice(null);
+              setStoreOpen(false);
+            }}
+          />
+        </ChipRow>
+        <TextInput
+          value={otherStore}
+          onChangeText={setOtherStore}
+          placeholder={t('add.otherStorePlaceholder')}
+          placeholderTextColor={c.textMuted}
+          accessibilityLabel={t('add.otherStore')}
+          maxLength={40}
+          style={[
+            styles.input,
+            { color: c.text, borderColor: c.border, backgroundColor: c.background },
+          ]}
+        />
+        <Button
+          label={t('add.otherStore')}
+          variant="secondary"
+          disabled={!otherStore.trim()}
+          onPress={() => {
+            setStoreChoice(otherStore.trim());
+            setOtherStore('');
+            setStoreOpen(false);
+          }}
+        />
+      </Sheet>
+
+      <Sheet
+        visible={listOpen}
+        onClose={() => setListOpen(false)}
+        title={t('add.listTitle')}
+        subtitle={t('add.listHint')}>
+        <TextInput
+          value={listText}
+          onChangeText={setListText}
+          placeholder={t('add.listPlaceholder')}
+          placeholderTextColor={c.textMuted}
+          accessibilityLabel={t('add.listTitle')}
+          multiline
+          autoFocus
+          textAlignVertical="top"
+          style={[
+            styles.input,
+            styles.listInput,
+            { color: c.text, borderColor: c.border, backgroundColor: c.background },
+          ]}
+        />
+        {listUnknown.length > 0 && (
+          <ThemedText style={{ color: c.warnFg }}>
+            {t('add.listUnknown', { list: joinList(listUnknown) })}
+          </ThemedText>
+        )}
+        <Button label={t('add.listAdd')} icon="add" disabled={!listText.trim()} onPress={addList} />
       </Sheet>
 
       <Sheet
@@ -558,6 +712,8 @@ const styles = StyleSheet.create({
   basketName: { fontSize: 16, fontWeight: '600' },
   remove: { minWidth: MIN_TOUCH - 8, alignItems: 'center' },
   purchasedRow: { gap: spacing.xs },
+  storeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  listInput: { minHeight: 110, paddingTop: spacing.sm, paddingBottom: spacing.sm },
   input: {
     minHeight: MIN_TOUCH + 4,
     borderWidth: 1,

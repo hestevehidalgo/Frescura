@@ -6,7 +6,14 @@ import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 import { Button, Chip, ChipRow } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
 import { useToast } from '@/components/undo-toast';
-import { useActiveItems, useProductLookup, useToday } from '@/features/inventory/store';
+import { useDb } from '@/db/provider';
+import { rememberAiQuota } from '@/db/settings-repo';
+import {
+  notifySettingsChanged,
+  useActiveItems,
+  useProductLookup,
+  useToday,
+} from '@/features/inventory/store';
 import {
   aiErrorKey,
   aiRecipeToRecipe,
@@ -49,6 +56,7 @@ export default function RecipesScreen() {
   const c = useThemeColors();
   const router = useRouter();
   const toast = useToast();
+  const db = useDb();
   const today = useToday();
   const lookup = useProductLookup();
   const { data: items } = useActiveItems();
@@ -85,6 +93,9 @@ export default function RecipesScreen() {
       toast(t('recipes.cachedNote'));
     } else if (result.recipesLeft !== null) {
       toast(tn('recipes.recipesLeft', result.recipesLeft));
+      void rememberAiQuota(db, today.slice(0, 7), { recipesLeft: result.recipesLeft })
+        .then(notifySettingsChanged)
+        .catch(() => {});
     }
     open(PENDING_AI_ID);
   };
@@ -141,7 +152,11 @@ export default function RecipesScreen() {
   );
 
   if (loading) {
-    return <View style={[styles.flex, { backgroundColor: c.background }]} />;
+    return (
+      <View style={[styles.flex, styles.center, { backgroundColor: c.background }]}>
+        <ActivityIndicator color={c.primary} accessibilityLabel={t('common.loading')} />
+      </View>
+    );
   }
 
   return (
@@ -169,6 +184,7 @@ export default function RecipesScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  center: { alignItems: 'center', justifyContent: 'center' },
   list: { padding: spacing.md, paddingBottom: spacing.xl },
   header: { gap: spacing.md, marginBottom: spacing.md },
   aiCard: { borderRadius: radius.lg, padding: spacing.md, gap: spacing.sm },

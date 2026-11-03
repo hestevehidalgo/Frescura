@@ -28,6 +28,10 @@ export type Settings = {
   equipment: string[];
   /** Ya pasó por la bienvenida. */
   onboardingDone: boolean;
+  /** Última tienda elegida al agregar a mano (para no elegirla cada vez). */
+  lastStore: string | null;
+  /** Lo que quedaba de la cuota de IA la última vez que se usó, por mes ("2026-11"). */
+  aiQuota: { month: string; scansLeft: number | null; recipesLeft: number | null } | null;
 };
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -46,6 +50,8 @@ export const DEFAULT_SETTINGS: Settings = {
   avoidAllergens: [],
   equipment: ['olla', 'sarten', 'horno', 'microondas'],
   onboardingDone: false,
+  lastStore: null,
+  aiQuota: null,
 };
 
 export async function getSettings(db: Db): Promise<Settings> {
@@ -75,4 +81,16 @@ export async function saveSettings(db: Db, patch: Partial<Settings>): Promise<Se
     }
   });
   return getSettings(db);
+}
+
+/** Guarda lo que queda de la cuota de IA (lo informa el servidor después de cada uso). */
+export async function rememberAiQuota(
+  db: Db,
+  month: string,
+  patch: { scansLeft?: number | null; recipesLeft?: number | null },
+): Promise<void> {
+  const { aiQuota } = await getSettings(db);
+  const base =
+    aiQuota && aiQuota.month === month ? aiQuota : { month, scansLeft: null, recipesLeft: null };
+  await saveSettings(db, { aiQuota: { ...base, ...patch } });
 }

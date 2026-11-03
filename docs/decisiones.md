@@ -2,6 +2,78 @@
 
 Registro de decisiones técnicas y de producto, con su motivo. Lo más reciente va arriba.
 
+## 2026-11-03 · Fase 4 (estadísticas y pulido)
+
+### Estadísticas en el celular, sin IA
+
+Todo sale de los productos y de su historial de eventos, que ya existían desde la fase 1:
+
+- **Plata botada:** lo marcado como "Lo boté", según el precio y la parte que se botó (si botas 4
+  de 10 marraquetas de $2.000, son $800).
+- **Plata salvada:** lo que te comiste cuando faltaban 3 días o menos para que venciera. Es una
+  definición simple y conservadora; incluye lo que se cocina con "Cociné esta receta".
+- **Aprovechado:** de todo lo que se cerró en el mes (comido o botado), qué parte se comió. Se
+  mide por cantidad, no por plata, para que cuenten también los productos sin precio. Lo
+  archivado "sin información" no cuenta para ningún lado.
+- **Gasto:** suma de precios de lo comprado en el mes, por categoría y por supermercado.
+- **Racha:** semanas completas (lunes a domingo) seguidas sin botar comida. Si esta semana ya
+  botaste algo, vuelve a 0. Sin medallas ni puntos, para no ser invasivos.
+- **Consejos:** reglas fijas (máximo 3). Si botas un tercio o más de un producto (al menos dos
+  veces en 60 días): pan, carnes, pollo, pescado, quesos y preparados → "congela una parte";
+  frutas y verduras → "compra menos". También: lo que más botaste en el mes, recordar marcar lo
+  vencido, agregar precios y felicitar un mes sobre 90 %.
+
+### Precio al dividir un lote
+
+Al dividir un producto ("Dividir en dos"), el lote nuevo copiaba el precio completo y la plata
+se contaba dos veces. Ahora el lote nuevo lleva su parte proporcional y el original mantiene el
+suyo. El precio por unidad se calcula sobre la cantidad comprada (lo que queda más lo ya comido,
+botado o separado), así que no cambia al ir usando el producto.
+
+### Supermercado al agregar a mano, sin cambiar la base
+
+Para comparar precios hace falta saber dónde se compró. Al agregar a mano ahora se puede elegir
+la tienda (se recuerda la última). Se guarda como una "compra" en la tabla `receipts`, sin folio
+ni RUT, así no hubo que agregar columnas al inventario. Los nombres se unifican ("LIDER EXPRESS
+LAS CONDES" y "Líder" son la misma tienda).
+
+### Comparar precios
+
+Por cada producto comprado en dos o más supermercados se muestra el último precio de cada uno,
+por kilo, por litro o por unidad (los gramos se pasan a kilos). En el detalle del producto se ve
+el historial de precios pagados. Todo sale de tus propias compras: no hay datos de otras
+personas ni de internet.
+
+### "Ingreso por voz" con el dictado del teclado
+
+El reconocimiento de voz propio necesita un módulo nativo que no viene en Expo Go. En cambio,
+"Dictar o escribir una lista" usa el micrófono del teclado del iPhone (gratis, sin internet
+extra) y la app entiende frases como "dos tomates, un kilo de papas y media docena de huevos".
+Lo que no reconoce se muestra para buscarlo a mano.
+
+### Respaldo en un archivo JSON
+
+"Guardar respaldo" crea un archivo con todas las tablas y abre el menú de compartir del
+celular, para guardarlo en Archivos, iCloud o el correo. "Cargar respaldo" lo lee con el
+selector de archivos y reemplaza los datos en una sola transacción (si falla, no se pierde
+nada). Un respaldo de una versión anterior también se puede cargar; uno de una versión más
+nueva se rechaza. No pasa por ningún servidor.
+
+### Compartir el resumen como imagen: pendiente
+
+El dueño lo dejó "en veremos". No se implementa todavía.
+
+### Borrar todos mis datos: en la fase 5
+
+Va junto con la política de privacidad, porque también debe borrar la cuenta anónima del
+servidor.
+
+### Dependencias de la fase 4
+
+- `expo-file-system`: escribir y leer el archivo de respaldo (trae su propio selector de
+  archivos, así que no hace falta `expo-document-picker`). Viene en Expo Go.
+- `expo-sharing`: abrir el menú de compartir para guardar el respaldo. Viene en Expo Go.
+
 ## 2026-11-02 · Fase 3 (recetas)
 
 ### Recetario base escrito durante el desarrollo, sin Batch API

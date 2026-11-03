@@ -20,5 +20,5 @@ avisa a tiempo y sugiere recetas con lo que está por vencer.
 | 1    | Inventario local sin IA                         | Aprobada  |
 | 2    | Escaneo de boletas                              | En curso  |
 | 3    | Recetas                                         | En prueba |
-| 4    | Estadísticas y pulido                           | Pendiente |
+| 4    | Estadísticas y pulido                           | En prueba |
 | 5    | Publicación                                     | Pendiente |
