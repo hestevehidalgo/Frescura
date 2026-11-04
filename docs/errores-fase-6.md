@@ -1,6 +1,6 @@
 # Fase 6: búsqueda y corrección de errores
 
-Revisión del 4 de noviembre de 2026. Para cada hallazgo: qué pasaba, por qué importa y cómo quedó.
+Revisión del 4 de noviembre de 2026 (dos rondas). Para cada hallazgo: qué pasaba, por qué importa y cómo quedó.
 Todos los arreglos tienen un test automático, salvo los visuales (revisados con capturas).
 
 ## Cómo se buscó
@@ -64,6 +64,27 @@ Todos los arreglos tienen un test automático, salvo los visuales (revisados con
 | #   | Qué pasaba                                                                                                                                    | Arreglo                                                       |
 | --- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | 20  | 8 paquetes desactualizados respecto del SDK 58 (`react-native-safe-area-context` con versión menor distinta). Podía causar fallas en Expo Go. | `npx expo install --fix`; `expo-doctor`: 20/20 revisiones OK. |
+
+## Segunda ronda (mismo día, por la tarde)
+
+| #   | Qué pasaba                                                                                                                                                                                                           | Arreglo                                                                                                                                                                                   |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 21  | **Doble toque en "Me lo comí" o "Lo boté"**: el producto se marcaba dos veces y el resumen contaba esa plata doble.                                                                                                  | El servicio rechaza acciones sobre productos ya cerrados y la pantalla ignora el segundo toque en silencio (sin tapar el "Deshacer"). También en "Seleccionar" y en "Cociné esta receta". |
+| 22  | **Doble toque en botones que guardan o gastan**: dos recetas propias iguales, dos productos por código de barras, "Borrar receta" volvía atrás dos veces e **"Inventar receta" hacía dos llamadas pagadas a la IA**. | Herramienta común `useSingleFlight` en esos botones y en Escanear.                                                                                                                        |
+| 23  | **La coma decimal en el dictado**: "1,5 kg de papas" se partía en dos productos ("1" y "5 kg de papas").                                                                                                             | La coma o el punto entre dos números se entiende como decimal.                                                                                                                            |
+| 24  | **"Un kilo y medio"** se partía en dos por la "y".                                                                                                                                                                   | Se convierte en 1,5 antes de separar.                                                                                                                                                     |
+| 25  | **Plural y singular en el catálogo**: "PALTAS HASS" o "Huevo" de una boleta no se reconocían y quedaban como fruta u otro genérico, sin su vida útil propia. "Zapallos italianos" caía en "zapallo".                 | El reconocimiento prueba singular y plural. Afecta a boletas, códigos de barras, dictado y recetas.                                                                                       |
+| 26  | **Fecha de compra futura** en Editar, y "12/11" sin año interpretado como el año siguiente.                                                                                                                          | Nuevo `parsePurchaseDate`: nunca futura; sin año usa este año o el anterior.                                                                                                              |
+| 27  | **Precio "$1.290.-"** (forma chilena común) no se aceptaba.                                                                                                                                                          | Se ignora el ".-" final.                                                                                                                                                                  |
+| 28  | La tarjeta de **producto vencido de alto riesgo** (pollo, pescado) no mostraba la advertencia de seguridad que sí aparece en el detalle.                                                                             | Se muestra.                                                                                                                                                                               |
+| 29  | **Horario silencioso de noche**: con el resumen a las 21:30 y silencio desde las 21:00, el aviso se movía a las 08:00 _del mismo día_, antes de la hora elegida.                                                     | Pasa a las 08:00 del día siguiente.                                                                                                                                                       |
+
+### Encontrado, pero queda para mañana (son funciones, no errores)
+
+- La revisión de boleta no deja **corregir cantidad ni precio** de una línea mal leída.
+- El ranking a veces sugiere recetas sin el **ingrediente principal**.
+
+Ambos están en `docs/comparacion-apps.md`, sección "Propuesta para mañana".
 
 ## Revisado y sin problemas
 

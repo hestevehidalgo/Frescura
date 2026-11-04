@@ -2,7 +2,7 @@ import type { InventoryItem } from '@/db/inventory-repo';
 import { DEFAULT_SETTINGS, type Settings } from '@/db/settings-repo';
 import { getCatalogProduct } from '@/features/catalog/catalog';
 
-import { IOS_LIMIT, PLAN_WEEKS, isQuietTime, planNotifications } from './planner';
+import { IOS_LIMIT, PLAN_WEEKS, isQuietTime, planNotifications, summaryTime } from './planner';
 
 let n = 0;
 function item(
@@ -125,6 +125,20 @@ describe('horario silencioso', () => {
     expect(isQuietTime(23 * 60, 22 * 60, 8 * 60)).toBe(true);
     expect(isQuietTime(3 * 60, 22 * 60, 8 * 60)).toBe(true);
     expect(isQuietTime(18 * 60, 22 * 60, 8 * 60)).toBe(false);
+  });
+
+  it('si el silencio empieza antes de la hora elegida, el aviso pasa a la mañana siguiente', () => {
+    const settings = {
+      ...DEFAULT_SETTINGS,
+      summaryHour: 21,
+      summaryMinute: 30,
+      quietStart: 21 * 60,
+    };
+    const date = summaryTime('2026-11-08', settings);
+    expect([date.getDate(), date.getHours(), date.getMinutes()]).toEqual([9, 8, 0]);
+    // De madrugada, el final del silencio es el mismo día.
+    const early = summaryTime('2026-11-08', { ...settings, summaryHour: 7, summaryMinute: 0 });
+    expect([early.getDate(), early.getHours()]).toEqual([8, 8]);
   });
 
   it('nunca programa de noche', () => {

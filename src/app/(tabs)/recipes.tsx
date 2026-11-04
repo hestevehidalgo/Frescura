@@ -25,6 +25,7 @@ import { PENDING_AI_ID, setPendingAiRecipe } from '@/features/recipes/pending';
 import type { RankedRecipe } from '@/features/recipes/ranking';
 import { useRankedRecipes } from '@/features/recipes/use-ranked-recipes';
 import { t, tn, type MessageKey } from '@/i18n';
+import { useSingleFlight } from '@/lib/single-flight';
 import { radius, spacing, useThemeColors } from '@/theme';
 
 type Filter = 'all' | 'quick' | 'chilean' | 'onePot' | 'mine';
@@ -56,6 +57,7 @@ export default function RecipesScreen() {
   const c = useThemeColors();
   const router = useRouter();
   const toast = useToast();
+  const once = useSingleFlight();
   const db = useDb();
   const today = useToday();
   const lookup = useProductLookup();
@@ -120,7 +122,7 @@ export default function RecipesScreen() {
             label={t('recipes.inventButton')}
             icon="sparkles"
             variant="secondary"
-            onPress={() => void invent()}
+            onPress={() => void once(invent)}
           />
         )}
         {aiError && (

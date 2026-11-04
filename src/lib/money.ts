@@ -15,7 +15,8 @@ export function formatClp(amount: Clp): string {
  * "-$990", "$ 12.400". Devuelve null si no es un monto válido (por ejemplo "1,29").
  */
 export function parseClp(text: string): Clp | null {
-  const compact = text.replace(/\s/g, '');
+  // "$1.290.-" es una forma común de escribir precios en Chile: el ".-" final se ignora.
+  const compact = text.replace(/\s/g, '').replace(/[.,]?-$/, '');
   const m = /^(-)?\$?(-)?(\d{1,3}(?:\.\d{3})+|\d+)$/.exec(compact);
   if (!m || (m[1] && m[2])) {
     return null;

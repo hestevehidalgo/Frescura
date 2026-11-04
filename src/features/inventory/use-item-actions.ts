@@ -1,5 +1,5 @@
 import * as Haptics from 'expo-haptics';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 
 import { useToast } from '@/components/undo-toast';
 import { getItem, type InventoryItem } from '@/db/inventory-repo';
@@ -45,6 +45,23 @@ function successMessage(
 export function useItemActions() {
   const db = useDb();
   const toast = useToast();
+  // Productos con una acción en curso: un segundo toque mientras tanto se ignora.
+  const busy = useRef(new Set<string>());
+  const bulkBusy = useRef(false);
+
+  /** Solo los que siguen activos (descarta los que ya se cerraron por un toque anterior). */
+  const stillActive = useCallback(
+    async <T extends { id: string }>(list: T[]): Promise<T[]> => {
+      const result: T[] = [];
+      for (const entry of list) {
+        if ((await getItem(db, entry.id))?.status === 'active') {
+          result.push(entry);
+        }
+      }
+      return result;
+    },
+    [db],
+  );
 
   const undoAll = useCallback(
     async (handles: UndoHandle[]) => {
@@ -58,7 +75,16 @@ export function useItemActions() {
 
   const run = useCallback(
     async (item: InventoryItem, action: ItemAction): Promise<boolean> => {
+      if (busy.current.has(item.id)) {
+        return false;
+      }
+      busy.current.add(item.id);
       try {
+        // Si ya no está activo (por ejemplo, un doble toque que llegó tarde), no se hace nada.
+        const fresh = await getItem(db, item.id);
+        if (fresh?.status !== 'active') {
+          return false;
+        }
         const handle = await performAction(db, item.id, action);
         notifyInventoryChanged();
         void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -68,6 +94,8 @@ export function useItemActions() {
       } catch {
         toast(t('toasts.error'));
         return false;
+      } finally {
+        busy.current.delete(item.id);
       }
     },
     [db, toast, undoAll],
@@ -78,10 +106,17 @@ export function useItemActions() {
       items: InventoryItem[],
       action: Extract<ItemAction, { type: 'consume' | 'discard' }>,
     ) => {
+      if (bulkBusy.current) {
+        return;
+      }
+      bulkBusy.current = true;
       const handles: UndoHandle[] = [];
       try {
-        for (const item of items) {
+        for (const item of await stillActive(items)) {
           handles.push(await performAction(db, item.id, action));
+        }
+        if (handles.length === 0) {
+          return;
         }
         notifyInventoryChanged();
         void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -90,18 +125,28 @@ export function useItemActions() {
       } catch {
         await undoAll(handles);
         toast(t('toasts.error'));
+      } finally {
+        bulkBusy.current = false;
       }
     },
-    [db, toast, undoAll],
+    [db, toast, undoAll, stillActive],
   );
 
   /** Varias acciones distintas como una sola, con un único "Deshacer". */
   const runEach = useCallback(
     async (actions: { item: InventoryItem; action: ItemAction }[], message: string) => {
+      if (bulkBusy.current) {
+        return false;
+      }
+      bulkBusy.current = true;
       const handles: UndoHandle[] = [];
       try {
-        for (const { item, action } of actions) {
+        const active = await stillActive(actions.map((a) => ({ ...a, id: a.item.id })));
+        for (const { item, action } of active) {
           handles.push(await performAction(db, item.id, action));
+        }
+        if (handles.length === 0) {
+          return false;
         }
         notifyInventoryChanged();
         void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -111,9 +156,11 @@ export function useItemActions() {
         await undoAll(handles);
         toast(t('toasts.error'));
         return false;
+      } finally {
+        bulkBusy.current = false;
       }
     },
-    [db, toast, undoAll],
+    [db, toast, undoAll, stillActive],
   );
 
   return { run, runMany, runEach };

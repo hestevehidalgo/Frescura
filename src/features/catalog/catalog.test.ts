@@ -1,4 +1,5 @@
 import {
+  matchCatalog,
   LOCATIONS,
   allCategories,
   allProducts,
@@ -109,5 +110,13 @@ describe('searchCatalog', () => {
 
   it('devuelve vacío sin texto', () => {
     expect(searchCatalog('  ')).toEqual([]);
+  });
+
+  it('matchCatalog entiende singular y plural', () => {
+    expect(matchCatalog('PALTAS HASS')?.id).toBe('palta');
+    expect(matchCatalog('Huevo blanco')?.id).toBe('huevos');
+    expect(matchCatalog('Tomates')?.id).toBe('tomate');
+    expect(matchCatalog('Zapallos italianos')?.id).toBe('zapallo-italiano');
+    expect(matchCatalog('Producto rarísimo')).toBeNull();
   });
 });

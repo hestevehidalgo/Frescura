@@ -211,6 +211,7 @@ export const esCL = {
     invalidQuantity: 'Escribe una cantidad válida, por ejemplo 1 o 1,5.',
     invalidPrice: 'Escribe el precio en pesos, por ejemplo $1.290.',
     invalidDate: 'Escribe la fecha como 12/11/26.',
+    futureDate: 'La fecha de compra no puede ser futura.',
   },
   barcode: {
     title: 'Código de barras',

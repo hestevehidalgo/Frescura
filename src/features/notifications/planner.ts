@@ -60,13 +60,20 @@ export function isQuietTime(minutes: number, quietStart: number, quietEnd: numbe
     : minutes >= quietStart || minutes < quietEnd;
 }
 
-/** Hora del resumen fuera del horario silencioso: si cae adentro, se mueve al final del silencio. */
-function summaryTime(day: IsoDate, settings: Settings): Date {
+/**
+ * Hora del resumen fuera del horario silencioso: si cae adentro, se mueve al final del silencio.
+ * Si el silencio es de noche (por ejemplo de 21:00 a 08:00) y el resumen cae en la parte de la
+ * noche, el final del silencio es al día siguiente, nunca antes de la hora elegida.
+ */
+export function summaryTime(day: IsoDate, settings: Settings): Date {
   const date = atLocalTime(day, settings.summaryHour, settings.summaryMinute);
-  if (!isQuietTime(minutesOf(date), settings.quietStart, settings.quietEnd)) {
+  const minutes = minutesOf(date);
+  if (!isQuietTime(minutes, settings.quietStart, settings.quietEnd)) {
     return date;
   }
-  return atLocalTime(day, Math.floor(settings.quietEnd / 60), settings.quietEnd % 60);
+  const crossesMidnight = settings.quietStart > settings.quietEnd;
+  const endDay = crossesMidnight && minutes >= settings.quietStart ? addDays(day, 1) : day;
+  return atLocalTime(endDay, Math.floor(settings.quietEnd / 60), settings.quietEnd % 60);
 }
 
 function alerts(item: InventoryItem, lookup: PlanInput['lookup'], settings: Settings): boolean {

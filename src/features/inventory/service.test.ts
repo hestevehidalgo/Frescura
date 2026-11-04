@@ -230,6 +230,14 @@ describe('acciones con deshacer', () => {
     expect(await getShelfLifeFactor(db, 'yogur')).toBe(1);
   });
 
+  it('un doble toque en "Me lo comí" no lo cuenta dos veces', async () => {
+    const item = await addToInventory(db, { product: product('palta'), quantity: 1 });
+    await performAction(db, item.id, { type: 'consume' });
+    await expect(performAction(db, item.id, { type: 'consume' })).rejects.toThrow();
+    await expect(performAction(db, item.id, { type: 'discard' })).rejects.toThrow();
+    expect((await listEvents(db, item.id)).map((e) => e.type)).toEqual(['added', 'consumed']);
+  });
+
   it('cambiar la fecha a mano', async () => {
     const item = await addToInventory(db, { product: product('yogur'), quantity: 1 });
     await performAction(db, item.id, { type: 'setExpiry', date: '2026-12-24', source: 'user' });

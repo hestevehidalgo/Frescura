@@ -10,6 +10,7 @@ import { saveUserRecipe } from '@/db/recipes-repo';
 import { notifyRecipesChanged } from '@/features/inventory/store';
 import { buildUserRecipe } from '@/features/recipes/user-recipe';
 import { t } from '@/i18n';
+import { useSingleFlight } from '@/lib/single-flight';
 import { MIN_TOUCH, radius, spacing, useThemeColors } from '@/theme';
 
 const SERVINGS = [1, 2, 3, 4, 6, 8];
@@ -41,6 +42,7 @@ export default function RecipeEditorScreen() {
   const db = useDb();
   const router = useRouter();
   const toast = useToast();
+  const once = useSingleFlight();
   const [title, setTitle] = useState('');
   const [servings, setServings] = useState(2);
   const [ingredientsText, setIngredientsText] = useState('');
@@ -102,7 +104,7 @@ export default function RecipeEditorScreen() {
         multiline
       />
       {invalid && <ThemedText style={{ color: c.dangerFg }}>{t('editor.invalid')}</ThemedText>}
-      <Button label={t('recipes.saveRecipe')} icon="checkmark" onPress={() => void save()} />
+      <Button label={t('recipes.saveRecipe')} icon="checkmark" onPress={() => void once(save)} />
     </ScrollView>
   );
 }

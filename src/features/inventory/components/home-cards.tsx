@@ -83,6 +83,14 @@ export function ExpiredPrompt({
           {t('home.whatHappened', { name: item.displayName.toLowerCase() })}
         </ThemedText>
       </View>
+      {highRisk && (
+        <View style={styles.titleRow}>
+          <Ionicons name="warning" size={18} color={c.dangerFg} />
+          <ThemedText style={[styles.warning, { color: c.dangerFg }]}>
+            {t('expiry.highRiskWarning')}
+          </ThemedText>
+        </View>
+      )}
       <View style={styles.buttons}>
         <Button variant="secondary" label={t('actions.ate')} onPress={onAte} style={styles.flex} />
         {/* Algo de alto riesgo ya vencido no se debe congelar. */}
@@ -108,6 +116,7 @@ export function ExpiredPrompt({
 const styles = StyleSheet.create({
   card: { borderRadius: radius.lg, padding: spacing.md, gap: spacing.sm },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  warning: { flex: 1, fontSize: 14, lineHeight: 20, fontWeight: '600' },
   title: { fontSize: 17, fontWeight: '700', flex: 1 },
   line: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   emoji: { fontSize: 20, lineHeight: 26 },

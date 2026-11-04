@@ -16,6 +16,12 @@ leídas por código de barras ya no se tratan como comida fresca.
 Un precio negativo o gigante casi siempre es un error de tipeo y arruina el resumen del mes. Se
 rechaza con un mensaje en vez de guardarse en silencio.
 
+### Toques dobles: se ignoran
+
+En una app que se usa con apuro (al volver del súper), los toques dobles son comunes. Regla: el
+servicio de inventario nunca actúa sobre un producto ya cerrado, y los botones que guardan o
+gastan IA ignoran un segundo toque mientras el primero no termina (`src/lib/single-flight.ts`).
+
 ### Análisis de mercado
 
 `docs/marketing.md`: demanda en Chile, competencia, tamaño de mercado, palabras clave para Google

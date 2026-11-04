@@ -21,6 +21,7 @@ import type { Recipe } from '@/features/recipes/recipes';
 import { useRecipe } from '@/features/recipes/use-recipe';
 import { t, tn, type MessageKey } from '@/i18n';
 import { formatDecimal, formatQuantity } from '@/lib/quantity';
+import { useSingleFlight } from '@/lib/single-flight';
 import { radius, spacing, useThemeColors } from '@/theme';
 
 const USED_OPTIONS: [UsedAmount, MessageKey][] = [
@@ -80,6 +81,7 @@ export default function RecipeDetailScreen() {
   const db = useDb();
   const router = useRouter();
   const toast = useToast();
+  const once = useSingleFlight();
   const today = useToday();
   const { runEach } = useItemActions();
   const { recipe, ranked, saved } = useRecipe(id);
@@ -176,7 +178,7 @@ export default function RecipeDetailScreen() {
               label={t('recipes.saveRecipe')}
               icon="bookmark-outline"
               variant="secondary"
-              onPress={() => void saveAi()}
+              onPress={() => void once(saveAi)}
             />
           )}
         </View>
@@ -213,7 +215,7 @@ export default function RecipeDetailScreen() {
             label={t('recipes.delete')}
             icon="trash-outline"
             variant="danger"
-            onPress={() => void remove()}
+            onPress={() => void once(remove)}
           />
         )}
       </ScrollView>
@@ -248,7 +250,7 @@ export default function RecipeDetailScreen() {
         <Button
           label={usedItems.length > 0 ? t('recipes.cookedConfirm') : t('common.close')}
           icon={usedItems.length > 0 ? 'checkmark' : undefined}
-          onPress={() => (usedItems.length > 0 ? void confirmCooked() : setCooking(false))}
+          onPress={() => (usedItems.length > 0 ? void once(confirmCooked) : setCooking(false))}
         />
       </Sheet>
     </>

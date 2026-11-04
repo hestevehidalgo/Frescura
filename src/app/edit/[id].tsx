@@ -10,7 +10,7 @@ import { useItemActions } from '@/features/inventory/use-item-actions';
 import { t, type MessageKey } from '@/i18n';
 import { formatDate } from '@/lib/dates';
 import { formatClp, parsePrice } from '@/lib/money';
-import { parsePackageDate } from '@/lib/package-date';
+import { parsePurchaseDate } from '@/lib/purchase-date';
 import { formatDecimal, parseDecimal, UNITS, type Unit } from '@/lib/quantity';
 import { MIN_TOUCH, radius, spacing, useThemeColors } from '@/theme';
 
@@ -74,9 +74,10 @@ function EditForm({ item }: { item: InventoryItem }) {
     if (price.trim() && parsedPrice === null) {
       nextErrors.price = 'edit.invalidPrice';
     }
-    const parsedDate = parsePackageDate(purchased, today)?.date;
-    if (!parsedDate) {
-      nextErrors.purchased = 'edit.invalidDate';
+    const purchase = parsePurchaseDate(purchased, today);
+    const parsedDate = 'date' in purchase ? purchase.date : null;
+    if ('error' in purchase) {
+      nextErrors.purchased = purchase.error === 'future' ? 'edit.futureDate' : 'edit.invalidDate';
     }
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0 || parsedQuantity === null || !parsedDate) {

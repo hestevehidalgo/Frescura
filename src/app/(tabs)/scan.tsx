@@ -17,6 +17,7 @@ import { setPendingReview } from '@/features/receipts/pending';
 import { buildReview } from '@/features/receipts/review';
 import { t, tn, type MessageKey } from '@/i18n';
 import { fingerprint } from '@/lib/hash';
+import { useSingleFlight } from '@/lib/single-flight';
 import { radius, spacing, useThemeColors } from '@/theme';
 
 type ErrorKey =
@@ -40,6 +41,7 @@ export default function ScanScreen() {
   const c = useThemeColors();
   const db = useDb();
   const router = useRouter();
+  const once = useSingleFlight();
   const today = useToday();
   const { data: settings } = useSettings();
   const [state, setState] = useState<State>({ step: 'idle' });
@@ -122,12 +124,16 @@ export default function ScanScreen() {
         </View>
       ) : (
         <View style={styles.buttons}>
-          <Button icon="camera" label={t('scan.takePhoto')} onPress={() => void scan('camera')} />
+          <Button
+            icon="camera"
+            label={t('scan.takePhoto')}
+            onPress={() => void once(() => scan('camera'))}
+          />
           <Button
             variant="secondary"
             icon="images-outline"
             label={t('scan.fromLibrary')}
-            onPress={() => void scan('library')}
+            onPress={() => void once(() => scan('library'))}
           />
           <Button
             variant="ghost"
@@ -173,7 +179,7 @@ export default function ScanScreen() {
         onClose={() => setConsentFor(null)}
         title={t('scan.consentTitle')}>
         <ThemedText variant="muted">{t('scan.consentBody')}</ThemedText>
-        <Button label={t('scan.consentAccept')} onPress={() => void acceptConsent()} />
+        <Button label={t('scan.consentAccept')} onPress={() => void once(acceptConsent)} />
         <Button variant="ghost" label={t('common.cancel')} onPress={() => setConsentFor(null)} />
       </Sheet>
     </ScrollView>

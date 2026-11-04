@@ -16,6 +16,7 @@ import { addToInventory } from '@/features/inventory/service';
 import { notifyInventoryChanged } from '@/features/inventory/store';
 import { t, tn } from '@/i18n';
 import { parsePrice } from '@/lib/money';
+import { useSingleFlight } from '@/lib/single-flight';
 import { capitalize } from '@/lib/text';
 import { MIN_TOUCH, radius, spacing, useThemeColors } from '@/theme';
 
@@ -29,6 +30,7 @@ export default function BarcodeScreen() {
   const c = useThemeColors();
   const db = useDb();
   const toast = useToast();
+  const once = useSingleFlight();
   const insets = useSafeAreaInsets();
   const [permission, requestPermission] = useCameraPermissions();
   const [state, setState] = useState<State>({ step: 'scanning' });
@@ -180,7 +182,7 @@ export default function BarcodeScreen() {
             <Button
               icon="add"
               label={t('barcode.addIt')}
-              onPress={() => void add(state.product, state.product.name)}
+              onPress={() => void once(() => add(state.product, state.product.name))}
             />
             <Button
               variant="ghost"
@@ -236,27 +238,29 @@ export default function BarcodeScreen() {
               icon="add"
               label={t('barcode.addIt')}
               disabled={!name.trim() || !category}
-              onPress={async () => {
-                if (!category) {
-                  return;
-                }
-                const productName = capitalize(name.trim());
-                const product =
-                  matchCatalog(productName) ??
-                  (await createCustomProduct(db, {
+              onPress={() =>
+                void once(async () => {
+                  if (!category) {
+                    return;
+                  }
+                  const productName = capitalize(name.trim());
+                  const product =
+                    matchCatalog(productName) ??
+                    (await createCustomProduct(db, {
+                      name: productName,
+                      categoryId: category,
+                      unit: 'un',
+                    }));
+                  await saveBarcode(db, {
+                    ean: state.ean,
+                    productId: product.id,
                     name: productName,
-                    categoryId: category,
-                    unit: 'un',
-                  }));
-                await saveBarcode(db, {
-                  ean: state.ean,
-                  productId: product.id,
-                  name: productName,
-                  brand: null,
-                  source: 'user',
-                });
-                await add(product, productName);
-              }}
+                    brand: null,
+                    source: 'user',
+                  });
+                  await add(product, productName);
+                })
+              }
             />
             <Button
               variant="ghost"

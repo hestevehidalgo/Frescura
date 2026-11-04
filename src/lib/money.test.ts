@@ -45,3 +45,10 @@ describe('parsePrice', () => {
     expect(parsePrice('1,29')).toBeNull();
   });
 });
+
+it('acepta el ".-" final de los precios chilenos', () => {
+  expect(parseClp('$1.290.-')).toBe(1290);
+  expect(parseClp('1290.-')).toBe(1290);
+  expect(parseClp('990,-')).toBe(990);
+  expect(parseClp('-990')).toBe(-990);
+});

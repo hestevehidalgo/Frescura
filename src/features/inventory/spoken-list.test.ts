@@ -35,3 +35,20 @@ it('devuelve lo que no reconoce', () => {
     'una nave espacial',
   ]);
 });
+
+it('entiende "y medio" sin partir la frase', () => {
+  expect(simplify('un kilo y medio de papas y 2 tomates')).toEqual([
+    ['papa', 1.5],
+    ['tomate', 2],
+  ]);
+  expect(simplify('kilo y medio de carne molida')).toEqual([['carne-molida', 1.5]]);
+  expect(simplify('2 litros y medio de leche')).toEqual([['leche-larga-vida', 2.5]]);
+});
+
+it('la coma decimal no separa productos', () => {
+  expect(simplify('1,5 kg de papas, 2 tomates')).toEqual([
+    ['papa', 1.5],
+    ['tomate', 2],
+  ]);
+  expect(splitSpokenList('leche, pan. huevos')).toEqual(['leche', 'pan', 'huevos']);
+});

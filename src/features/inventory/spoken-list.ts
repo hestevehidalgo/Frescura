@@ -29,12 +29,30 @@ export type SpokenEntry = { product: Product; quantity: number };
 
 export type SpokenResult = { entries: SpokenEntry[]; unknown: string[] };
 
+/**
+ * "un kilo y medio" → "1,5 kilo", "2 litros y medio" → "2,5 litros". Se hace antes de separar por
+ * "y", porque si no la frase se partiría en dos productos.
+ */
+function joinAndHalf(text: string): string {
+  return text.replace(
+    /(?:\b(un|una|uno|\d+(?:[.,]\d+)?)\s+)?\b(kilos?|kg|litros?|lts?)\s+y\s+medio\b/gi,
+    (_match, amount: string | undefined, unit: string) => {
+      const base =
+        amount === undefined || /^un[oa]?$/i.test(amount) ? 1 : Number(amount.replace(',', '.'));
+      return `${String(base + 0.5).replace('.', ',')} ${unit}`;
+    },
+  );
+}
+
 /** Separa por comas, puntos, saltos de línea y la palabra "y". */
 export function splitSpokenList(text: string): string[] {
-  return text
-    .split(/[,;.\n]+|\s+y\s+|\s+e\s+/i)
-    .map((part) => part.trim())
-    .filter((part) => part.length > 0);
+  return (
+    joinAndHalf(text)
+      // La coma o el punto entre dos números es decimal ("1,5 kg"), no separa productos.
+      .split(/(?:[;\n]|(?<!\d)[,.]|[,.](?!\d))+|\s+y\s+|\s+e\s+/i)
+      .map((part) => part.trim())
+      .filter((part) => part.length > 0)
+  );
 }
 
 /** "dos tomates" → "2 tomates"; "media docena de huevos" → "6 huevos"; "un kilo de papas" → "1 kilo de papas". */

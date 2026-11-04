@@ -183,13 +183,45 @@ export function matchCatalog(name: string): Product | null {
   const normalized = normalizeForSearch(name);
   const words = normalized.split(' ');
   for (let length = Math.min(3, words.length); length >= 1; length--) {
-    const prefix = words.slice(0, length).join(' ');
-    const match = searchCatalog(prefix, 3).find((p) =>
-      [p.name, ...p.aliases].map(normalizeForSearch).some((n) => n === prefix),
-    );
-    if (match) {
-      return match;
+    for (const prefix of numberVariants(words.slice(0, length))) {
+      const match = searchCatalog(prefix, 3).find((p) =>
+        [p.name, ...p.aliases].map(normalizeForSearch).some((n) => n === prefix),
+      );
+      if (match) {
+        return match;
+      }
     }
   }
   return null;
+}
+
+/**
+ * La frase tal cual y con la primera palabra en singular o plural: "paltas" → "palta",
+ * "huevo" → "huevos", "tomates" → "tomate". Así la boleta y el catálogo calzan aunque uno diga
+ * "Palta" y el otro "PALTAS HASS".
+ */
+function numberVariants(words: string[]): string[] {
+  const [first = '', ...rest] = words;
+  const forms = [first];
+  if (first.endsWith('es') && first.length > 4) {
+    forms.push(first.slice(0, -2));
+  }
+  if (first.endsWith('s') && first.length > 3) {
+    forms.push(first.slice(0, -1));
+  } else {
+    forms.push(`${first}s`, `${first}es`);
+  }
+  const variants = forms.map((form) => [form, ...rest].join(' '));
+  // Todas las palabras en singular: "zapallos italianos" → "zapallo italiano".
+  if (rest.length > 0) {
+    variants.push(words.map(singular).join(' '));
+  }
+  return [...new Set(variants)];
+}
+
+function singular(word: string): string {
+  if (word.endsWith('es') && word.length > 4 && !/[aeiou]es$/.test(word.slice(-3))) {
+    return word.slice(0, -2);
+  }
+  return word.endsWith('s') && word.length > 3 ? word.slice(0, -1) : word;
 }

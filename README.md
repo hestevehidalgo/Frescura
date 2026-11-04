@@ -12,6 +12,7 @@ avisa a tiempo y sugiere recetas con lo que está por vencer.
 - Costos y proyecciones: [`docs/costos.md`](docs/costos.md)
 - Errores corregidos en la fase 6: [`docs/errores-fase-6.md`](docs/errores-fase-6.md)
 - Mercado y plan de marketing: [`docs/marketing.md`](docs/marketing.md)
+- Comparación con otras apps (qué agregar y qué sacar): [`docs/comparacion-apps.md`](docs/comparacion-apps.md)
 - Ideas y respuestas del dueño: [`docs/ideas.md`](docs/ideas.md)
 - Decisiones técnicas: [`docs/decisiones.md`](docs/decisiones.md)
 - Convenciones para trabajar con Claude Code: [`CLAUDE.md`](CLAUDE.md)

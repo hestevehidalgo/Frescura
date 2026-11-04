@@ -139,6 +139,11 @@ export async function performAction(
   if (!item) {
     throw new Error(`No existe el producto ${itemId}`);
   }
+  // Un producto ya comido, botado o archivado no admite más acciones. Evita, por ejemplo, que un
+  // doble toque en "Me lo comí" lo cuente dos veces en el resumen.
+  if (item.status !== 'active') {
+    throw new Error(`El producto ${itemId} ya no está en el inventario`);
+  }
   const product = await requireProduct(db, item);
   const closedAt = now.toISOString();
 
