@@ -63,6 +63,15 @@ describe('buildHome', () => {
     expect(home.cookToday.map((i) => i.displayName)).toEqual(['Pollo', 'Lechuga', 'Zanahoria']);
   });
 
+  it('"Hoy cocina con esto" muestra cada producto una sola vez', () => {
+    const home = buildHome(
+      [...items, item('Pollo', '2026-11-10'), item('Pollo', '2026-11-11')],
+      TODAY,
+      ALL,
+    );
+    expect(home.cookToday.map((i) => i.displayName)).toEqual(['Pollo', 'Lechuga', 'Zanahoria']);
+  });
+
   it('filtra por lugar', () => {
     const home = buildHome(items, TODAY, { location: 'pantry', query: '' });
     expect(home.sections.flatMap((s) => s.data.map((r) => r.item.displayName))).toEqual(['Arroz']);

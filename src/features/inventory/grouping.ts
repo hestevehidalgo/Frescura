@@ -68,6 +68,7 @@ export function buildHome(items: InventoryItem[], today: IsoDate, filter: HomeFi
       (s) => s.data.length > 0,
     ),
     expired: sorted.filter((item) => urgencyOf(item.expiresAt, today) === 'expired'),
+    // Un producto por tipo: dos lotes de palta se muestran una sola vez (el que vence antes).
     cookToday: sorted
       .filter((item) => {
         const urgency = urgencyOf(item.expiresAt, today);
@@ -76,6 +77,9 @@ export function buildHome(items: InventoryItem[], today: IsoDate, filter: HomeFi
           (urgency === 'today' || urgency === 'soon' || urgency === 'week')
         );
       })
+      .filter(
+        (item, index, list) => list.findIndex((i) => i.productId === item.productId) === index,
+      )
       .slice(0, 3),
     total: items.length,
   };

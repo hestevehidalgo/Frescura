@@ -75,6 +75,7 @@ it('aiRecipeToRecipe enlaza ingredientes con el catálogo', () => {
 
 it('aiErrorKey', () => {
   expect(aiErrorKey('quota')).toBe('recipes.aiErrors.quota');
+  expect(aiErrorKey('busy')).toBe('recipes.aiErrors.busy');
   expect(aiErrorKey('server')).toBe('recipes.aiErrors.failed');
   expect(aiErrorKey('ai_failed')).toBe('recipes.aiErrors.failed');
 });

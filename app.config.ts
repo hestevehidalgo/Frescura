@@ -12,7 +12,6 @@ const config: ExpoConfig = {
   userInterfaceStyle: 'automatic',
   ios: {
     bundleIdentifier: APP_CONFIG.bundleId,
-    icon: './assets/expo.icon',
     supportsTablet: true,
   },
   android: {
@@ -24,6 +23,17 @@ const config: ExpoConfig = {
       monochromeImage: './assets/images/android-icon-monochrome.png',
     },
     predictiveBackGestureEnabled: false,
+    // Permisos que agregan las librerías pero la app no usa: las fotos y el respaldo se eligen con
+    // el selector del sistema, que no necesita acceso a todo el almacenamiento.
+    blockedPermissions: [
+      'android.permission.READ_EXTERNAL_STORAGE',
+      'android.permission.WRITE_EXTERNAL_STORAGE',
+      'android.permission.READ_MEDIA_IMAGES',
+      'android.permission.READ_MEDIA_VIDEO',
+      'android.permission.READ_MEDIA_AUDIO',
+      'android.permission.RECORD_AUDIO',
+      'android.permission.SYSTEM_ALERT_WINDOW',
+    ],
   },
   web: {
     output: 'single',
@@ -60,6 +70,8 @@ const config: ExpoConfig = {
       },
     ],
   ],
+  // Necesario para compilar con EAS (se completa con el id que entrega `npx eas-cli init`).
+  ...(APP_CONFIG.easProjectId ? { extra: { eas: { projectId: APP_CONFIG.easProjectId } } } : {}),
   experiments: {
     typedRoutes: true,
     reactCompiler: true,

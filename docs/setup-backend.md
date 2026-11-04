@@ -124,6 +124,15 @@ Se hace una sola vez, después de los pasos anteriores.
 3. Prueba: en la app, **Recetas** → **Inventar receta**. Necesitas al menos dos productos en el
    inventario que no estén vencidos ni congelados.
 
+## 10. Freno de gasto diario y borrado de datos (fase 5)
+
+Los pasos están en la **Parte 2** de [`publicacion.md`](publicacion.md): una consulta SQL nueva
+(`20261104000000_daily_spend.sql`) y subir las funciones `parse-receipt`, `generate-recipe` y
+`delete-account`.
+
+Opcional: para cambiar el tope diario (por defecto US$0,25), en Supabase → **Edge Functions →
+Secrets** agrega `DAILY_LIMIT_USD` con el valor en dólares (por ejemplo `0.5`).
+
 ## Ver cuánto se está gastando
 
 En Supabase → **SQL Editor**, pega el contenido de `scripts/cost-report.sql` y toca **Run**.

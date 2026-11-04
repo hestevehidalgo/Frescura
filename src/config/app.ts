@@ -9,4 +9,6 @@ export const APP_CONFIG = {
   bundleId: 'com.hestevehidalgo.frescura',
   locale: 'es-CL',
   timeZone: 'America/Santiago',
+  /** Id del proyecto en Expo (EAS). Lo entrega `npx eas-cli init`; no es secreto. */
+  easProjectId: '',
 } as const;

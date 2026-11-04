@@ -1,7 +1,7 @@
 import { getCatalogProduct } from '@/features/catalog/catalog';
 import { addToInventory, performAction } from '@/features/inventory/service';
 
-import { exportBackup, parseBackup, restoreBackup } from './backup';
+import { exportBackup, parseBackup, restoreBackup, wipeAllData } from './backup';
 import { listEvents, listItems } from './inventory-repo';
 import { SCHEMA_VERSION } from './migrations';
 import { saveUserRecipe } from './recipes-repo';
@@ -77,4 +77,17 @@ describe('parseBackup', () => {
       ),
     ).toEqual({ error: 'newer' });
   });
+});
+
+it('wipeAllData deja el celular como recién instalado', async () => {
+  const db = await createMigratedDb();
+  const palta = getCatalogProduct('palta');
+  if (palta) {
+    await addToInventory(db, { product: palta, quantity: 1 });
+  }
+  await saveSettings(db, { onboardingDone: true });
+  await wipeAllData(db);
+  expect(await listItems(db)).toEqual([]);
+  expect(await db.getAllAsync('SELECT * FROM item_events')).toEqual([]);
+  expect((await getSettings(db)).onboardingDone).toBe(false);
 });

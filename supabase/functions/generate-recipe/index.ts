@@ -6,6 +6,7 @@
 import Anthropic from 'npm:@anthropic-ai/sdk@1.3.0';
 import { createClient } from 'npm:@supabase/supabase-js@2.118.0';
 
+import { dailyLimitUsd, overDailyLimit } from '../_shared/spend.ts';
 import { estimateUsd, monthKey } from '../parse-receipt/logic.ts';
 import {
   RECIPE_JSON_SCHEMA,
@@ -22,6 +23,7 @@ import {
 const MODEL = Deno.env.get('AI_MODEL') ?? 'claude-haiku-5-5';
 const RECIPE_LIMIT = Number(Deno.env.get('RECIPE_MONTHLY_LIMIT') ?? '5');
 const MAX_PER_MINUTE = 3;
+const DAILY_LIMIT_USD = dailyLimitUsd(Deno.env.get('DAILY_LIMIT_USD'));
 const MAX_OUTPUT_TOKENS = 1200;
 
 function secretKey(): string {
@@ -146,6 +148,11 @@ Deno.serve(async (req) => {
     .gte('created_at', since);
   if ((count ?? 0) >= MAX_PER_MINUTE) {
     return reply(429, { ok: false, error: 'rate_limited' });
+  }
+
+  // Freno de gasto diario de todo el proyecto (antes de descontar cuota).
+  if (await overDailyLimit(admin, DAILY_LIMIT_USD)) {
+    return reply(503, { ok: false, error: 'busy' });
   }
 
   // 5. Cuota mensual (se descuenta antes y se devuelve si la IA falla).

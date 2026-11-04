@@ -1,7 +1,8 @@
 import Constants from 'expo-constants';
 import { useEffect, useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Alert, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
 import { Button, Chip, ChipRow } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
@@ -10,6 +11,8 @@ import { parseBackup, restoreBackup, type Backup } from '@/db/backup';
 import { useDb } from '@/db/provider';
 import { saveSettings, type Settings } from '@/db/settings-repo';
 import { allCategories } from '@/features/catalog/catalog';
+import { LEGAL } from '@/config/legal';
+import { deleteAllMyData } from '@/features/account/delete-data';
 import { BACKUP_SUPPORTED, pickBackupText, shareBackup } from '@/features/backup/backup-file';
 import {
   notifyInventoryChanged,
@@ -108,6 +111,7 @@ export default function SettingsScreen() {
   const [permission, setPermission] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
   const toast = useToast();
+  const router = useRouter();
   const today = useToday();
 
   useEffect(() => {
@@ -196,6 +200,32 @@ export default function SettingsScreen() {
     ]);
   };
 
+  const deleteEverything = async () => {
+    setBusy(true);
+    const result = await deleteAllMyData(db).catch(() => 'server' as const);
+    setBusy(false);
+    if (result !== 'ok') {
+      toast(t(result === 'offline' ? 'settings.deleteOffline' : 'settings.deleteServer'));
+      return;
+    }
+    notifyInventoryChanged();
+    notifyRecipesChanged();
+    notifySettingsChanged();
+    toast(t('settings.deleteDone'));
+    router.replace('/welcome');
+  };
+
+  const confirmDelete = () => {
+    Alert.alert(t('settings.deleteTitle'), t('settings.deleteBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('settings.deleteConfirm'),
+        style: 'destructive',
+        onPress: () => void deleteEverything(),
+      },
+    ]);
+  };
+
   const alertCategories = allCategories().filter((cat) => cat.id !== 'otros');
   const version = Constants.expoConfig?.version ?? '';
 
@@ -208,7 +238,15 @@ export default function SettingsScreen() {
           onChange={(v) => void toggleNotifications(v)}
         />
         {permission === false && settings.notificationsEnabled && (
-          <ThemedText style={{ color: c.dangerFg }}>{t('settings.permissionDenied')}</ThemedText>
+          <>
+            <ThemedText style={{ color: c.dangerFg }}>{t('settings.permissionDenied')}</ThemedText>
+            <Button
+              icon="settings-outline"
+              variant="secondary"
+              label={t('settings.openPhoneSettings')}
+              onPress={() => void Linking.openSettings()}
+            />
+          </>
         )}
         <ThemedText variant="muted" style={styles.small}>
           {t('settings.notificationsHint')}
@@ -339,6 +377,19 @@ export default function SettingsScreen() {
             {t('settings.backupWebOnly')}
           </ThemedText>
         )}
+        <Button
+          icon="open-outline"
+          variant="ghost"
+          label={t('settings.privacyPolicy')}
+          onPress={() => void Linking.openURL(LEGAL.privacyUrl)}
+        />
+        <Button
+          icon="trash-outline"
+          variant="danger"
+          label={t('settings.deleteAll')}
+          disabled={busy}
+          onPress={confirmDelete}
+        />
       </Section>
 
       <Section title={t('settings.aboutSection')}>

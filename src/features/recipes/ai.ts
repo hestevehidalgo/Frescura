@@ -113,6 +113,7 @@ export function aiErrorKey(
   | 'recipes.aiErrors.offline'
   | 'recipes.aiErrors.not_configured'
   | 'recipes.aiErrors.rate_limited'
+  | 'recipes.aiErrors.busy'
   | 'recipes.aiErrors.not_enough'
   | 'recipes.aiErrors.failed' {
   switch (error) {
@@ -120,6 +121,7 @@ export function aiErrorKey(
     case 'offline':
     case 'not_configured':
     case 'rate_limited':
+    case 'busy':
     case 'not_enough':
       return `recipes.aiErrors.${error}`;
     default:

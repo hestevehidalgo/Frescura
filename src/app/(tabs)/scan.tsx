@@ -23,6 +23,7 @@ type ErrorKey =
   | 'quota'
   | 'rate_limited'
   | 'offline'
+  | 'busy'
   | 'not_configured'
   | 'ai_failed'
   | 'invalid'

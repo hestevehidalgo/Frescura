@@ -272,5 +272,6 @@ export type ParseReceiptResponse =
   | { ok: true; receipt: ParsedReceipt; scansLeft: number }
   | {
       ok: false;
-      error: 'quota' | 'rate_limited' | 'invalid' | 'ai_failed' | 'unauthorized' | 'server';
+      error:
+        'quota' | 'rate_limited' | 'busy' | 'invalid' | 'ai_failed' | 'unauthorized' | 'server';
     };

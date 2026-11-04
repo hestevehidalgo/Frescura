@@ -34,3 +34,14 @@ where created_at >= date_trunc('month', now() at time zone 'America/Santiago')
 group by 1
 order by 3 desc
 limit 20;
+
+-- Gasto de hoy contra el tope diario (DAILY_LIMIT_USD, por defecto US$0,25).
+select round(public.ai_spend_since(date_trunc('day', now() at time zone 'UTC') at time zone 'UTC'), 4)
+  as usd_hoy;
+
+-- Recetas con IA: cuántas veces se reutilizó cada receta del caché (cada uso extra fue gratis).
+select
+  count(*) as recetas_en_cache,
+  coalesce(sum(uses), 0) as veces_entregadas,
+  coalesce(sum(uses), 0) - count(*) as entregas_gratis
+from public.generated_recipes;

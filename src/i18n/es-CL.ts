@@ -307,9 +307,21 @@ export const esCL = {
       'Ese respaldo es de una versión más nueva. Actualiza la app y vuelve a intentarlo.',
     backupError: 'No se pudo completar. Inténtalo de nuevo.',
     backupWebOnly: 'El respaldo está disponible en la app del celular.',
+    deleteAll: 'Borrar todos mis datos',
+    deleteTitle: '¿Borrar todos tus datos?',
+    deleteBody:
+      'Se borra tu inventario, tus compras, tus recetas y tus ajustes de este celular, y tu cuenta anónima del servidor. No se puede deshacer. Si quieres conservarlos, guarda antes un respaldo.',
+    deleteConfirm: 'Sí, borrar todo',
+    deleteDone: 'Se borraron todos tus datos.',
+    deleteOffline:
+      'No hay conexión para borrar tus datos del servidor. No se borró nada; inténtalo de nuevo con internet.',
+    deleteServer:
+      'El servidor no pudo borrar tus datos. No se borró nada; inténtalo de nuevo más tarde.',
+    privacyPolicy: 'Política de privacidad',
     version: 'Versión {version}',
     permissionDenied:
-      'Las notificaciones están bloqueadas. Actívalas en Ajustes del iPhone → Notificaciones → Expo Go.',
+      'Las notificaciones están bloqueadas. Actívalas en los ajustes del celular, en Notificaciones.',
+    openPhoneSettings: 'Abrir ajustes del celular',
   },
   scan: {
     title: 'Escanea tu boleta',
@@ -337,6 +349,7 @@ export const esCL = {
     errors: {
       quota: 'Usaste todos tus escaneos del mes. Puedes seguir agregando productos a mano.',
       rate_limited: 'Espera un minuto antes de escanear otra boleta.',
+      busy: 'Hoy el escaneo de boletas tuvo mucha demanda. Vuelve a intentarlo mañana o agrega a mano.',
       offline: 'Sin conexión a internet. Revisa tu conexión y vuelve a intentarlo.',
       not_configured:
         'El escaneo de boletas todavía no está activado en esta versión. Mientras tanto, agrega a mano.',
@@ -346,7 +359,7 @@ export const esCL = {
       unauthorized: 'No pudimos iniciar tu sesión. Vuelve a intentarlo.',
       server: 'Algo salió mal en el servidor. Vuelve a intentarlo en un rato.',
       denied:
-        'Necesitamos permiso para usar la cámara o tus fotos. Actívalo en los ajustes del iPhone.',
+        'Necesitamos permiso para usar la cámara o tus fotos. Actívalo en los ajustes del celular.',
       duplicate: 'Esta boleta ya la escaneaste.',
       empty: 'No encontramos productos en la foto. Prueba con otra.',
     },
@@ -449,6 +462,7 @@ export const esCL = {
       not_configured: 'Las recetas con IA todavía no están activadas en esta versión.',
       failed: 'No pudimos crear una receta. Inténtalo de nuevo.',
       rate_limited: 'Espera un minuto antes de pedir otra receta.',
+      busy: 'Hoy las recetas con IA tuvieron mucha demanda. Vuelve a intentarlo mañana; las recetas del recetario siguen disponibles.',
       not_enough:
         'Necesitas al menos dos productos en tu inventario que no estén vencidos ni congelados.',
     },

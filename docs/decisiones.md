@@ -2,6 +2,66 @@
 
 Registro de decisiones técnicas y de producto, con su motivo. Lo más reciente va arriba.
 
+## 2026-11-04 · Fase 5 (publicación en Google Play)
+
+### Primero Android, con prueba cerrada
+
+Google Play cobra US$25 una vez (Apple, US$99 al año). Las cuentas personales nuevas deben
+hacer una prueba cerrada con al menos 12 testers inscritos durante 14 días seguidos antes de
+pedir acceso a producción, y verificar la cuenta con un celular Android real (no sirve el
+emulador). El plan y los pasos están en `docs/publicacion.md`.
+
+### Compilación con EAS, plan gratis
+
+`eas.json` tiene dos perfiles: `preview` (APK para instalar a mano) y `production` (AAB para
+Google Play). El número de versión lo lleva Expo (`appVersionSource: remote` y
+`autoIncrement`), así no hay que acordarse de subirlo. El SDK 58 ya apunta a Android 16
+(API 36), que es lo que Google exige desde el 31 de agosto de 2026.
+
+### Permisos mínimos en Android
+
+Las librerías pedían acceso a todo el almacenamiento, al micrófono y a dibujar sobre otras apps.
+La app no lo necesita (las fotos y el respaldo se eligen con el selector del sistema), así que se
+bloquean en `app.config.ts`. Quedan: cámara, internet, vibración y notificaciones. Menos permisos
+= formulario de seguridad de datos más simple y más confianza.
+
+### Política de privacidad en GitHub Pages
+
+El repositorio es público, así que GitHub Pages es gratis. La carpeta `site/` tiene la política,
+la página de borrado de datos y una portada; un workflow las publica solas. Basada en la Ley
+19.628 con los cambios de la Ley 21.719 (vigente desde el 1 de diciembre de 2026) y en la
+política de Anthropic para su API (borra entradas y salidas en 30 días y no entrena con ellas).
+Falta completar el nombre del responsable y el correo de contacto.
+
+### "Borrar todos mis datos"
+
+Primero borra la cuenta anónima del servidor (Edge Function `delete-account`; las cuotas se
+borran en cascada y en `ai_usage` las filas quedan sin usuario). Si eso funciona, borra todas las
+tablas del celular y vuelve a la bienvenida. Si no hay internet, no borra nada, para que la
+persona pueda reintentar y no quede una cuenta huérfana.
+
+### Freno de gasto diario
+
+Además del límite de US$5 al mes en Anthropic, las funciones dejan de llamar a la IA si el gasto
+del día (todas las personas juntas) llega a US$0,25 (`DAILY_LIMIT_USD`). Así un día malo (abuso o
+un error) no se come el presupuesto del mes. La persona ve "Hoy hubo mucha demanda" y puede seguir
+a mano. Si la consulta del gasto falla, también se frena, por precaución.
+
+### Ícono propio
+
+La app usaba el ícono de la plantilla de Expo. Se reemplazó por una hoja verde sobre fondo crema,
+dibujada con `scripts/make-icon.py` (se puede regenerar). Para iOS se usa el mismo `icon.png`.
+
+### Textos sin "iPhone"
+
+Los mensajes de permisos decían "Ajustes del iPhone". Ahora dicen "ajustes del celular" y hay un
+botón que abre directamente los ajustes de la app.
+
+### Capturas para la tienda desde la versión web
+
+Las 6 capturas (1080 × 2160) se tomaron de la versión web con datos de ejemplo, porque el dueño no
+tiene Android. Se reemplazarán por capturas reales cuando haya un Android a mano.
+
 ## 2026-11-03 · Fase 4 (estadísticas y pulido)
 
 ### Estadísticas en el celular, sin IA

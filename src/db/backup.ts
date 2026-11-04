@@ -114,6 +114,15 @@ export async function restoreBackup(db: Db, backup: Backup): Promise<{ items: nu
   return { items: backup.tables.inventory_items.length };
 }
 
+/** Borra todos los datos del celular (para "Borrar todos mis datos"). */
+export async function wipeAllData(db: Db): Promise<void> {
+  await db.withTransactionAsync(async () => {
+    for (const table of [...TABLES].reverse()) {
+      await db.runAsync(`DELETE FROM ${table}`);
+    }
+  });
+}
+
 /** Nombre del archivo: "frescura-respaldo-2026-11-03.json". */
 export function backupFileName(date: string): string {
   return `frescura-respaldo-${date}.json`;

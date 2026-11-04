@@ -225,4 +225,7 @@ export function parseAiRecipe(raw: unknown, request: RecipeRequest): AiRecipe | 
 
 export type GenerateRecipeResponse =
   | { ok: true; recipe: AiRecipe; recipesLeft: number | null; cached: boolean }
-  | { ok: false; error: 'quota' | 'rate_limited' | 'invalid' | 'ai_failed' | 'unauthorized' };
+  | {
+      ok: false;
+      error: 'quota' | 'rate_limited' | 'busy' | 'invalid' | 'ai_failed' | 'unauthorized';
+    };
