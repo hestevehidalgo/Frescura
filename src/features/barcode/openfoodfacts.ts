@@ -35,7 +35,13 @@ export function resetRateLimit(): void {
 }
 
 // Etiquetas de categoría de Open Food Facts → categorías de Frescura. La primera que calce gana.
+// Conservas y congelados van primero: un atún en lata también trae la etiqueta de pescado, y no
+// dura 2 días sino años.
 const CATEGORY_TAGS: [string, string][] = [
+  ['en:canned-foods', 'conservas'],
+  ['en:canned-fishes', 'conservas'],
+  ['en:canned-meats', 'conservas'],
+  ['en:frozen-foods', 'congelados'],
   ['en:yogurts', 'lacteos'],
   ['en:milks', 'lacteos'],
   ['en:creams', 'lacteos'],
@@ -50,10 +56,8 @@ const CATEGORY_TAGS: [string, string][] = [
   ['en:seafood', 'pescados'],
   ['en:fishes', 'pescados'],
   ['en:meats', 'carnes'],
-  ['en:frozen-foods', 'congelados'],
   ['en:breads', 'panaderia'],
   ['en:cakes', 'panaderia'],
-  ['en:canned-foods', 'conservas'],
   ['en:juices', 'bebidas'],
   ['en:beverages', 'bebidas'],
   ['en:sauces', 'salsas'],

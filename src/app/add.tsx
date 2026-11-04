@@ -2,7 +2,14 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Chip, ChipRow } from '@/components/button';
@@ -36,7 +43,7 @@ import {
 import { STORES } from '@/features/stats/stores';
 import { joinList, t, tn } from '@/i18n';
 import { addDays } from '@/lib/dates';
-import { parseClp } from '@/lib/money';
+import { parsePrice } from '@/lib/money';
 import { formatQuantity } from '@/lib/quantity';
 import { capitalize } from '@/lib/text';
 import { MIN_TOUCH, radius, spacing, useThemeColors } from '@/theme';
@@ -69,6 +76,9 @@ export default function AddScreen() {
   const toast = useToast();
   const today = useToday();
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
+  // En celulares chicos la lista "Para guardar" no debe tapar toda la pantalla.
+  const basketListHeight = Math.min(180, Math.round(windowHeight * 0.22));
 
   const [query, setQuery] = useState('');
   const [custom, setCustom] = useState<Product[]>([]);
@@ -159,7 +169,12 @@ export default function AddScreen() {
     setQuantityFor(entry);
   };
 
+  const badPrices = basket.filter((e) => e.priceText.trim() && parsePrice(e.priceText) === null);
+
   const save = async () => {
+    if (badPrices.length > 0) {
+      return;
+    }
     setSaving(true);
     const purchasedAt = addDays(today, -daysAgo);
     const ids: string[] = [];
@@ -186,7 +201,7 @@ export default function AddScreen() {
           location: entry.location,
           purchasedAt,
           ripe: entry.ripe ?? undefined,
-          priceClp: parseClp(entry.priceText),
+          priceClp: parsePrice(entry.priceText),
           receiptId,
         });
         ids.push(item.id);
@@ -370,7 +385,7 @@ export default function AddScreen() {
           <ThemedText style={styles.basketTitle} accessibilityRole="header">
             {t('add.basketTitle')}
           </ThemedText>
-          <ScrollView style={styles.basketList} nestedScrollEnabled>
+          <ScrollView style={{ maxHeight: basketListHeight }} nestedScrollEnabled>
             {basket.map((entry) => (
               <View key={entry.key} style={styles.basketEntry}>
                 <View style={styles.basketRow}>
@@ -408,7 +423,7 @@ export default function AddScreen() {
                         color: c.text,
                         backgroundColor: c.background,
                         borderColor:
-                          entry.priceText && parseClp(entry.priceText) === null
+                          entry.priceText && parsePrice(entry.priceText) === null
                             ? c.dangerFg
                             : c.border,
                       },
@@ -465,10 +480,15 @@ export default function AddScreen() {
               onPress={() => setStoreOpen(true)}
             />
           </View>
+          {badPrices.length > 0 && (
+            <ThemedText style={[styles.hint, { color: c.dangerFg }]}>
+              {t('add.badPrices')}
+            </ThemedText>
+          )}
           <Button
             label={tn('add.save', basket.length)}
             icon="checkmark"
-            disabled={saving}
+            disabled={saving || badPrices.length > 0}
             onPress={save}
           />
         </View>
@@ -692,7 +712,6 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   basketTitle: { fontWeight: '700' },
-  basketList: { maxHeight: 180 },
   basketEntry: { paddingVertical: spacing.xs, gap: spacing.xs },
   basketRow: {
     flexDirection: 'row',

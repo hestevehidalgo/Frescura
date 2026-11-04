@@ -23,3 +23,12 @@ export function parseClp(text: string): Clp | null {
   const value = Number((m[3] ?? '').replace(/\./g, ''));
   return m[1] || m[2] ? -value : value;
 }
+
+/** Tope de precio para un producto: más que esto es casi seguro un error de tipeo. */
+export const MAX_ITEM_PRICE = 2_000_000;
+
+/** Precio de un producto escrito a mano: como parseClp, pero sin negativos ni montos absurdos. */
+export function parsePrice(text: string): Clp | null {
+  const value = parseClp(text);
+  return value !== null && value >= 0 && value <= MAX_ITEM_PRICE ? value : null;
+}

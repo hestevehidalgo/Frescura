@@ -9,10 +9,18 @@ const JPEG_QUALITY = 0.6;
 export type CapturedImage = { base64: string; uri: string };
 export type CaptureResult = CapturedImage | 'cancelled' | 'denied';
 
-async function shrink(uri: string): Promise<CapturedImage> {
-  const rendered = await ImageManipulator.manipulate(uri)
-    .resize({ width: TARGET_WIDTH })
-    .renderAsync();
+/** Ancho al que se lleva la foto: nunca se agranda (agrandar solo gasta más tokens). */
+export function targetWidth(width: number | undefined): number | null {
+  return width !== undefined && width > TARGET_WIDTH ? TARGET_WIDTH : null;
+}
+
+async function shrink(uri: string, width: number | undefined): Promise<CapturedImage> {
+  const target = targetWidth(width);
+  const context = ImageManipulator.manipulate(uri);
+  if (target !== null) {
+    context.resize({ width: target });
+  }
+  const rendered = await context.renderAsync();
   const saved = await rendered.saveAsync({
     base64: true,
     compress: JPEG_QUALITY,
@@ -22,12 +30,13 @@ async function shrink(uri: string): Promise<CapturedImage> {
 }
 
 export async function captureReceipt(source: 'camera' | 'library'): Promise<CaptureResult> {
-  const permission =
-    source === 'camera'
-      ? await ImagePicker.requestCameraPermissionsAsync()
-      : await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (!permission.granted) {
-    return 'denied';
+  // La galería usa el selector del sistema, que no necesita permiso (y en Android el permiso de
+  // leer todas las fotos está bloqueado a propósito). Solo la cámara pide permiso.
+  if (source === 'camera') {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      return 'denied';
+    }
   }
   const options: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], quality: 1 };
   const result =
@@ -38,5 +47,5 @@ export async function captureReceipt(source: 'camera' | 'library'): Promise<Capt
   if (!asset) {
     return 'cancelled';
   }
-  return shrink(asset.uri);
+  return shrink(asset.uri, asset.width);
 }

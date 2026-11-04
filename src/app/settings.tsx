@@ -2,7 +2,16 @@ import Constants from 'expo-constants';
 import { useEffect, useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useRouter } from 'expo-router';
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import {
+  Alert,
+  Linking,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  View,
+} from 'react-native';
 
 import { Button, Chip, ChipRow } from '@/components/button';
 import { ThemedText } from '@/components/themed-text';
@@ -208,14 +217,26 @@ export default function SettingsScreen() {
       toast(t(result === 'offline' ? 'settings.deleteOffline' : 'settings.deleteServer'));
       return;
     }
+    // Se cierra Ajustes y la barra de pestañas lleva sola a la bienvenida (una sola vez).
+    if (router.canDismiss()) {
+      router.dismissAll();
+    } else {
+      router.replace('/welcome');
+    }
     notifyInventoryChanged();
     notifyRecipesChanged();
     notifySettingsChanged();
     toast(t('settings.deleteDone'));
-    router.replace('/welcome');
   };
 
   const confirmDelete = () => {
+    // En la versión web (solo para revisar pantallas) Alert no muestra nada.
+    if (Platform.OS === 'web') {
+      if (globalThis.confirm?.(`${t('settings.deleteTitle')}\n\n${t('settings.deleteBody')}`)) {
+        void deleteEverything();
+      }
+      return;
+    }
     Alert.alert(t('settings.deleteTitle'), t('settings.deleteBody'), [
       { text: t('common.cancel'), style: 'cancel' },
       {

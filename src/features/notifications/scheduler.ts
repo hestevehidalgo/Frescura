@@ -98,7 +98,7 @@ let pending: Promise<void> | null = null;
 let again = false;
 
 /**
- * Borra y vuelve a programar los avisos de los próximos 14 días. Se llama al abrir la app y cada
+ * Borra y vuelve a programar los resúmenes de las próximas semanas (PLAN_WEEKS). Se llama al abrir la app y cada
  * vez que cambia el inventario o los ajustes. Si ya hay una reprogramación en curso, se repite al final.
  */
 export async function rescheduleNotifications(db: Db): Promise<void> {

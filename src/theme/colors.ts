@@ -24,6 +24,9 @@ export const palette = {
     neutralBg: '#EFE8DD',
     neutralFg: '#5C5148',
     overlay: 'rgba(30, 24, 20, 0.45)',
+    // Fondo del visor de cámara y sombras.
+    camera: '#000000',
+    shadow: '#000000',
   },
   dark: {
     background: '#161311',
@@ -46,6 +49,8 @@ export const palette = {
     neutralBg: '#2F2A26',
     neutralFg: '#D6CCC2',
     overlay: 'rgba(0, 0, 0, 0.6)',
+    camera: '#000000',
+    shadow: '#000000',
   },
 } as const;
 

@@ -17,6 +17,11 @@ import { MIN_TOUCH, radius, spacing, useThemeColors } from '@/theme';
 
 const DURATION_MS = 5000;
 
+/** Tiempo en pantalla: al menos 5 segundos, más si el mensaje es largo (unas 15 letras por segundo). */
+export function toastDuration(message: string): number {
+  return Math.max(DURATION_MS, Math.min(12_000, Math.round((message.length / 15) * 1000)));
+}
+
 type Toast = { id: number; message: string; onUndo?: () => void | Promise<void> };
 type ShowToast = (message: string, onUndo?: Toast['onUndo']) => void;
 
@@ -43,7 +48,7 @@ export function UndoToastProvider({ children }: { children: ReactNode }) {
       }
       setToast({ id: Date.now(), message, onUndo });
       AccessibilityInfo.announceForAccessibility(message);
-      timer.current = setTimeout(hide, DURATION_MS);
+      timer.current = setTimeout(hide, toastDuration(message));
     },
     [hide],
   );
@@ -61,9 +66,9 @@ export function UndoToastProvider({ children }: { children: ReactNode }) {
           pointerEvents="box-none"
           style={[styles.wrapper, { bottom: insets.bottom + 70 }]}>
           <View
-            style={[styles.toast, { backgroundColor: colors.text }]}
+            style={[styles.toast, { backgroundColor: colors.text, shadowColor: colors.shadow }]}
             accessibilityLiveRegion="polite">
-            <ThemedText style={[styles.message, { color: colors.background }]} numberOfLines={2}>
+            <ThemedText style={[styles.message, { color: colors.background }]} numberOfLines={4}>
               {toast.message}
             </ThemedText>
             {toast.onUndo && (
@@ -99,7 +104,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     paddingLeft: spacing.md,
     minHeight: MIN_TOUCH + 8,
-    shadowColor: '#000',
     shadowOpacity: 0.2,
     shadowRadius: 8,
     shadowOffset: { width: 0, height: 4 },

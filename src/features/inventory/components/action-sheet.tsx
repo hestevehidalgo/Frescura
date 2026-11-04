@@ -245,7 +245,10 @@ export function ItemActionSheet({ item, initialView = 'main', today, onClose, on
       title = t('actions.whereIsIt');
       content = (
         <View style={styles.gap}>
-          {LOCATIONS.filter((l) => l !== item.location).map((location) => (
+          {LOCATIONS.filter(
+            // Lo descongelado no se vuelve a congelar.
+            (l) => l !== item.location && !(l === 'freezer' && item.thawedAt),
+          ).map((location) => (
             <Button
               key={location}
               variant="secondary"

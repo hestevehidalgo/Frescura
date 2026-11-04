@@ -72,6 +72,9 @@ describe('categorías y catálogo', () => {
   it('traduce etiquetas de categoría', () => {
     expect(categoryFromTags(['en:dairies', 'en:cheeses'])).toBe('quesos');
     expect(categoryFromTags(['en:something'])).toBeNull();
+    // Atún en lata y pescado congelado no son pescado fresco.
+    expect(categoryFromTags(['en:seafood', 'en:fishes', 'en:canned-foods'])).toBe('conservas');
+    expect(categoryFromTags(['en:fishes', 'en:frozen-foods'])).toBe('congelados');
   });
 
   it('reconoce productos del catálogo por el nombre', () => {

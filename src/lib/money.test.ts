@@ -1,4 +1,4 @@
-import { formatClp, parseClp } from './money';
+import { formatClp, parseClp, parsePrice } from './money';
 
 describe('formatClp', () => {
   it.each([
@@ -33,5 +33,15 @@ describe('parseClp', () => {
 
   it('nunca interpreta el punto como decimal', () => {
     expect(parseClp('1.290')).not.toBe(1.29);
+  });
+});
+
+describe('parsePrice', () => {
+  it('acepta precios normales y rechaza negativos o absurdos', () => {
+    expect(parsePrice('$1.290')).toBe(1290);
+    expect(parsePrice('0')).toBe(0);
+    expect(parsePrice('-990')).toBeNull();
+    expect(parsePrice('12900000')).toBeNull();
+    expect(parsePrice('1,29')).toBeNull();
   });
 });

@@ -30,7 +30,9 @@ export async function shareBackup(db: Db): Promise<boolean> {
 
 /** Abre el selector de archivos. Devuelve el texto del archivo o null si la persona cancela. */
 export async function pickBackupText(): Promise<string | null> {
-  const picked = await File.pickFileAsync({ mimeTypes: ['application/json', 'text/plain'] });
+  // Se acepta cualquier archivo: Android a veces marca el .json como "archivo genérico" y lo
+  // dejaría en gris. El contenido se revisa después con parseBackup.
+  const picked = await File.pickFileAsync({ mimeTypes: '*/*' });
   if (picked.canceled) {
     return null;
   }

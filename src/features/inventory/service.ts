@@ -76,7 +76,7 @@ export type ItemAction =
   | { type: 'discard'; quantity?: number; reason?: DiscardReason }
   | { type: 'open' }
   | { type: 'freeze' }
-  | { type: 'thaw' }
+  | { type: 'thaw'; location?: Exclude<Location, 'freezer'> }
   | { type: 'move'; location: Location }
   | { type: 'setExpiry'; date: IsoDate; source: 'printed' | 'user' }
   | {
@@ -110,6 +110,14 @@ async function requireProduct(db: Db, item: InventoryItem): Promise<Product> {
     throw new Error(`Producto desconocido: ${item.productId}`);
   }
   return product;
+}
+
+/**
+ * El ajuste personal de vida útil solo aprende de productos cerrados que no se abrieron ni
+ * congelaron: si se abrió, la fecha dependía de eso y no de cuánto dura cerrado.
+ */
+function untouched(item: InventoryItem): boolean {
+  return !item.openedAt && !item.frozenAt && !item.thawedAt;
 }
 
 /** Cuánto queda después de usar `used`; null si se usó todo. */
@@ -148,7 +156,12 @@ export async function performAction(
         now,
       );
       // Se lo comió en buen estado después de la fecha estimada: aprendizaje cauteloso.
-      if (left === null && item.expirySource === 'estimated' && today > item.expiresAt) {
+      if (
+        left === null &&
+        item.expirySource === 'estimated' &&
+        untouched(item) &&
+        today > item.expiresAt
+      ) {
         return {
           eventId,
           factor: await adjustFactor(db, product, (f) => factorAfterLastedLonger(product, f)),
@@ -174,6 +187,7 @@ export async function performAction(
       if (
         action.reason === 'spoiled' &&
         item.expirySource === 'estimated' &&
+        untouched(item) &&
         today < item.expiresAt
       ) {
         return { eventId, factor: await adjustFactor(db, product, factorAfterSpoiledEarly) };
@@ -194,6 +208,10 @@ export async function performAction(
       };
     }
     case 'freeze': {
+      // Seguridad alimentaria: lo descongelado no se vuelve a congelar.
+      if (item.thawedAt) {
+        throw new Error('No se vuelve a congelar algo descongelado');
+      }
       const expiry = expiryAfterFreezing(product, today);
       return {
         eventId: await updateItem(
@@ -211,7 +229,7 @@ export async function performAction(
         eventId: await updateItem(
           db,
           itemId,
-          { location: 'fridge', thawedAt: today, ...expiryPatch(expiry) },
+          { location: action.location ?? 'fridge', thawedAt: today, ...expiryPatch(expiry) },
           { type: 'thawed' },
           now,
         ),
@@ -225,7 +243,7 @@ export async function performAction(
         return performAction(db, itemId, { type: 'freeze' }, today, now);
       }
       if (item.location === 'freezer') {
-        return performAction(db, itemId, { type: 'thaw' }, today, now);
+        return performAction(db, itemId, { type: 'thaw', location: action.location }, today, now);
       }
       const expiry = expiryAfterMoving(
         product,

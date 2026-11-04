@@ -4,7 +4,7 @@
 import type { Db } from '@/db/db';
 import { removeItems } from '@/db/inventory-repo';
 import { createCustomProduct } from '@/db/products-repo';
-import { deleteReceipt, insertReceipt } from '@/db/receipts-repo';
+import { deleteReceipt, findReceipt, insertReceipt } from '@/db/receipts-repo';
 import { matchCatalog, type Location, type Product } from '@/features/catalog/catalog';
 import { addToInventory } from '@/features/inventory/service';
 import { isIsoDate, minDate, type IsoDate } from '@/lib/dates';
@@ -108,13 +108,17 @@ export async function saveReview(
   db: Db,
   review: ReceiptReview,
 ): Promise<{ receiptId: string; itemIds: string[] }> {
+  // Si la persona decide guardar una boleta repetida (la pantalla le avisa), se guarda sin huella:
+  // la huella es única en la base y si no, fallaría al guardar.
+  const repeated =
+    review.fingerprint !== null && (await findReceipt(db, { fingerprint: review.fingerprint }));
   const receipt = await insertReceipt(db, {
     chain: review.chain,
     issuerRut: review.issuerRut,
     folio: review.folio,
     purchasedAt: review.purchasedAt,
     totalClp: review.totalClp,
-    fingerprint: review.fingerprint,
+    fingerprint: repeated ? null : review.fingerprint,
     imageHash: review.imageHash,
   });
   const itemIds: string[] = [];

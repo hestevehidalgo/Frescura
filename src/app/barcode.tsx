@@ -1,7 +1,7 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Chip, ChipRow } from '@/components/button';
@@ -15,6 +15,7 @@ import { lookupBarcode } from '@/features/barcode/openfoodfacts';
 import { addToInventory } from '@/features/inventory/service';
 import { notifyInventoryChanged } from '@/features/inventory/store';
 import { t, tn } from '@/i18n';
+import { parsePrice } from '@/lib/money';
 import { capitalize } from '@/lib/text';
 import { MIN_TOUCH, radius, spacing, useThemeColors } from '@/theme';
 
@@ -33,6 +34,7 @@ export default function BarcodeScreen() {
   const [state, setState] = useState<State>({ step: 'scanning' });
   const [name, setName] = useState('');
   const [category, setCategory] = useState<string | null>(null);
+  const [priceText, setPriceText] = useState('');
 
   const resolve = async (ean: string) => {
     setState({ step: 'looking', ean });
@@ -84,7 +86,13 @@ export default function BarcodeScreen() {
   };
 
   const add = async (product: Product, displayName: string) => {
-    const item = await addToInventory(db, { product, quantity: 1, displayName });
+    const item = await addToInventory(db, {
+      product,
+      quantity: 1,
+      displayName,
+      priceClp: parsePrice(priceText),
+    });
+    setPriceText('');
     notifyInventoryChanged();
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     toast(tn('toasts.added', 1), async () => {
@@ -107,13 +115,26 @@ export default function BarcodeScreen() {
         <ThemedText variant="muted" style={styles.centerText}>
           {t('barcode.permissionBody')}
         </ThemedText>
-        <Button icon="camera" label={t('barcode.permissionButton')} onPress={requestPermission} />
+        {permission.canAskAgain ? (
+          <Button icon="camera" label={t('barcode.permissionButton')} onPress={requestPermission} />
+        ) : (
+          <>
+            <ThemedText style={[styles.centerText, { color: c.dangerFg }]}>
+              {t('barcode.permissionBlocked')}
+            </ThemedText>
+            <Button
+              icon="settings-outline"
+              label={t('barcode.openSettings')}
+              onPress={() => void Linking.openSettings()}
+            />
+          </>
+        )}
       </View>
     );
   }
 
   return (
-    <View style={[styles.flex, { backgroundColor: '#000' }]}>
+    <View style={[styles.flex, { backgroundColor: c.camera }]}>
       <CameraView
         style={styles.flex}
         facing="back"
@@ -140,6 +161,22 @@ export default function BarcodeScreen() {
                 {t('barcode.source')}
               </ThemedText>
             )}
+            <TextInput
+              value={priceText}
+              onChangeText={setPriceText}
+              placeholder={t('barcode.price')}
+              placeholderTextColor={c.textMuted}
+              accessibilityLabel={t('barcode.price')}
+              keyboardType="number-pad"
+              style={[
+                styles.input,
+                {
+                  color: c.text,
+                  backgroundColor: c.background,
+                  borderColor: priceText && parsePrice(priceText) === null ? c.dangerFg : c.border,
+                },
+              ]}
+            />
             <Button
               icon="add"
               label={t('barcode.addIt')}
@@ -179,6 +216,22 @@ export default function BarcodeScreen() {
                 />
               ))}
             </ChipRow>
+            <TextInput
+              value={priceText}
+              onChangeText={setPriceText}
+              placeholder={t('barcode.price')}
+              placeholderTextColor={c.textMuted}
+              accessibilityLabel={t('barcode.price')}
+              keyboardType="number-pad"
+              style={[
+                styles.input,
+                {
+                  color: c.text,
+                  backgroundColor: c.background,
+                  borderColor: priceText && parsePrice(priceText) === null ? c.dangerFg : c.border,
+                },
+              ]}
+            />
             <Button
               icon="add"
               label={t('barcode.addIt')}

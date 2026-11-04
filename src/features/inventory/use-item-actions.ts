@@ -29,7 +29,7 @@ function successMessage(
     case 'freeze':
       return t('toasts.froze', { name });
     case 'thaw':
-      return t('toasts.thawed', { name });
+      return t('toasts.thawed', { name, date: formatShort(after?.expiresAt ?? before.expiresAt) });
     case 'move':
       return t('toasts.moved', { name, location: t(`locations.${action.location}`) });
     case 'setExpiry':

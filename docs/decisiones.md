@@ -2,6 +2,26 @@
 
 Registro de decisiones técnicas y de producto, con su motivo. Lo más reciente va arriba.
 
+## 2026-11-04 · Fase 6 (búsqueda de errores y marketing)
+
+### Revisión completa antes de publicar
+
+El dueño pidió una fase dedicada a buscar errores. Se corrigieron 20 hallazgos, todos con test
+salvo los visuales. El detalle está en `docs/errores-fase-6.md`. Los más importantes: no se puede
+recongelar algo descongelado, la galería funciona en Android sin permisos amplios y las conservas
+leídas por código de barras ya no se tratan como comida fresca.
+
+### Precio de producto: entre $0 y $2.000.000
+
+Un precio negativo o gigante casi siempre es un error de tipeo y arruina el resumen del mes. Se
+rechaza con un mensaje en vez de guardarse en silencio.
+
+### Análisis de mercado
+
+`docs/marketing.md`: demanda en Chile, competencia, tamaño de mercado, palabras clave para Google
+Play, plan de lanzamiento de 90 días con el presupuesto disponible y métricas. Recomendación de
+producto: la lista de compras y el compartir como imagen van antes que otras funciones.
+
 ## 2026-11-04 · Fase 5 (publicación en Google Play)
 
 ### Primero Android, con prueba cerrada

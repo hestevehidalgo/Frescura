@@ -148,6 +148,13 @@ describe('saveReview', () => {
     expect(await findReceipt(db, { imageHash: 'hash-1' })).not.toBeNull();
   });
 
+  it('se puede guardar una boleta repetida si la persona insiste (sin romper la huella única)', async () => {
+    await saveReview(db, buildReview(RECEIPT, TODAY, 'hash-1'));
+    const again = await saveReview(db, buildReview(RECEIPT, TODAY, 'hash-2'));
+    expect(again.itemIds).toHaveLength(3);
+    expect(await listReceipts(db)).toHaveLength(2);
+  });
+
   it('deshacer borra la boleta y sus productos', async () => {
     const saved = await saveReview(db, buildReview(RECEIPT, TODAY, null));
     await undoSavedReview(db, saved);

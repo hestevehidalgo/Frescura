@@ -188,6 +188,48 @@ describe('acciones con deshacer', () => {
     expect((await getItem(db, item.id))?.frozenAt).not.toBeNull();
   });
 
+  it('lo descongelado no se vuelve a congelar, ni moviéndolo al congelador', async () => {
+    const item = await addToInventory(db, {
+      product: product('carne-molida'),
+      quantity: 1,
+      purchasedAt: '2026-11-02',
+    });
+    await performAction(db, item.id, { type: 'freeze' }, '2026-11-02');
+    await performAction(db, item.id, { type: 'thaw' }, '2026-12-01');
+    await expect(performAction(db, item.id, { type: 'freeze' })).rejects.toThrow();
+    await expect(
+      performAction(db, item.id, { type: 'move', location: 'freezer' }),
+    ).rejects.toThrow();
+    expect((await getItem(db, item.id))?.location).toBe('fridge');
+  });
+
+  it('sacar del congelador a la despensa respeta el lugar elegido', async () => {
+    const item = await addToInventory(db, { product: product('marraqueta'), quantity: 4 });
+    await performAction(db, item.id, { type: 'move', location: 'freezer' }, '2026-11-02');
+    await performAction(db, item.id, { type: 'move', location: 'pantry' }, '2026-11-20');
+    expect(await getItem(db, item.id)).toMatchObject({
+      location: 'pantry',
+      thawedAt: '2026-11-20',
+    });
+  });
+
+  it('no aprende de productos abiertos: la fecha dependía de haberlo abierto', async () => {
+    const item = await addToInventory(db, {
+      product: product('yogur'),
+      quantity: 1,
+      purchasedAt: '2026-11-02',
+    });
+    await performAction(db, item.id, { type: 'open' }, '2026-11-03');
+    const handle = await performAction(
+      db,
+      item.id,
+      { type: 'discard', reason: 'spoiled' },
+      '2026-11-04',
+    );
+    expect(handle.factor).toBeUndefined();
+    expect(await getShelfLifeFactor(db, 'yogur')).toBe(1);
+  });
+
   it('cambiar la fecha a mano', async () => {
     const item = await addToInventory(db, { product: product('yogur'), quantity: 1 });
     await performAction(db, item.id, { type: 'setExpiry', date: '2026-12-24', source: 'user' });

@@ -13,20 +13,22 @@ import {
   subscribeSettings,
 } from '@/features/inventory/store';
 
-import { ACTION_ATE, ACTION_DISCARDED, rescheduleNotifications } from './scheduler';
+import { ACTION_ATE, ACTION_DISCARDED, ACTION_RECIPES, rescheduleNotifications } from './scheduler';
 
 const handled = new Set<string>();
 
 async function handleResponse(
   db: Db,
   response: Notifications.NotificationResponse,
-  goHome: () => void,
+  go: (path: '/' | '/recipes') => void,
 ): Promise<void> {
   const key = `${response.notification.request.identifier}|${response.actionIdentifier}`;
   if (handled.has(key)) {
     return;
   }
   handled.add(key);
+  // Se atiende una sola vez: si no, cada vez que se abre la app se repetiría el último aviso.
+  Notifications.clearLastNotificationResponse();
   const itemId = response.notification.request.content.data?.itemId;
   const action = response.actionIdentifier;
   if (typeof itemId === 'string' && (action === ACTION_ATE || action === ACTION_DISCARDED)) {
@@ -37,8 +39,8 @@ async function handleResponse(
     }
     return;
   }
-  // Tocar el aviso o "Ver recetas": por ahora abre Inicio (las recetas llegan en la fase 3).
-  goHome();
+  // "Ver recetas" abre las recetas; tocar el aviso abre Inicio.
+  go(action === ACTION_RECIPES ? '/recipes' : '/');
 }
 
 /**
@@ -83,13 +85,13 @@ export function useNotificationSync(): void {
     if (Platform.OS === 'web') {
       return;
     }
-    const goHome = () => router.navigate('/');
+    const go = (path: '/' | '/recipes') => router.navigate(path);
     const last = Notifications.getLastNotificationResponse();
     if (last) {
-      void handleResponse(db, last, goHome).catch(() => {});
+      void handleResponse(db, last, go).catch(() => {});
     }
     const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
-      void handleResponse(db, response, goHome).catch(() => {});
+      void handleResponse(db, response, go).catch(() => {});
     });
     return () => subscription.remove();
   }, [db, router]);
