@@ -63,6 +63,25 @@ describe('agregar', () => {
     expect((await listEvents(db, item.id)).map((e) => e.type)).toEqual(['added']);
   });
 
+  it('dos lotes del mismo producto con fechas distintas quedan separados', async () => {
+    await addToInventory(db, {
+      product: product('yogur'),
+      quantity: 1,
+      printedDate: '2027-04-15',
+    });
+    await addToInventory(db, {
+      product: product('yogur'),
+      quantity: 1,
+      printedDate: '2027-04-16',
+      printedSource: 'user',
+    });
+    const lots = (await listItems(db)).map((i) => [i.expiresAt, i.expirySource]);
+    expect(lots).toEqual([
+      ['2027-04-15', 'printed'],
+      ['2027-04-16', 'user'],
+    ]);
+  });
+
   it('la fecha del envase reemplaza a la estimada', async () => {
     const item = await addToInventory(db, {
       product: product('yogur'),

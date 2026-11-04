@@ -4,11 +4,17 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import * as SplashScreen from 'expo-splash-screen';
+
+import { BrandSplash } from '@/components/brand-splash';
 import { UndoToastProvider } from '@/components/undo-toast';
 import { DbProvider } from '@/db/provider';
 import { useNotificationSync } from '@/features/notifications/use-notifications';
 import { t } from '@/i18n';
 import { palette } from '@/theme';
+
+// La pantalla de carga nativa queda hasta que aparece el logo (ver BrandSplash).
+void SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function navigationTheme(scheme: 'light' | 'dark'): Theme {
   const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
@@ -72,6 +78,7 @@ export default function RootLayout() {
             </Stack>
           </UndoToastProvider>
         </DbProvider>
+        <BrandSplash />
       </ThemeProvider>
     </GestureHandlerRootView>
   );

@@ -52,7 +52,8 @@
     "test": "jest",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "npm run typecheck && npm run lint && npm run format:check && npm test"
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm test",
+    "build:web": "expo export -p web --output-dir dist"
   },
   "private": true,
   "jest": {

@@ -24,6 +24,7 @@ millón leídos del caché.
 | -------------------------------------------------------------- | ---------------------------------------- | ------------- | ------------------------ |
 | Escanear una boleta (foto, ~20 productos)                      | ~2.000 tokens (imagen) + prompt en caché | ~1.000 tokens | **≈ US$0,0007**          |
 | Receta nueva con IA                                            | ~100 tokens + prompt en caché            | ~400 tokens   | **≈ US$0,0002**          |
+| Madurez de una fruta con foto (512 px)                         | ~450 tokens (imagen) + prompt en caché   | ~20 tokens    | **≈ US$0,0001**          |
 | Receta del caché compartido                                    | 0                                        | 0             | **US$0**                 |
 | Recetas del recetario, estadísticas, avisos, códigos de barras | —                                        | —             | **US$0** (en el celular) |
 
@@ -60,8 +61,8 @@ funcionando a mano. Antes de llegar ahí hay que activar la versión pagada o su
    hasta el mes siguiente. (Console → Settings → Limits.)
 2. **Freno diario en el servidor: US$0,25** (variable `DAILY_LIMIT_USD`). Si un día se gasta eso,
    las funciones dejan de llamar a la IA hasta el día siguiente (UTC).
-3. **Cuota por persona:** 30 escaneos y 5 recetas con IA al mes (variables
-   `SCAN_MONTHLY_LIMIT` y `RECIPE_MONTHLY_LIMIT`).
+3. **Cuota por persona:** 30 escaneos, 5 recetas con IA y 10 fotos de madurez al mes
+   (variables `SCAN_MONTHLY_LIMIT`, `RECIPE_MONTHLY_LIMIT` y `PHOTO_MONTHLY_LIMIT`).
 4. **Límite por minuto:** 3 llamadas por persona.
 5. **Caché:** la misma boleta no se lee dos veces y la misma receta se paga una sola vez.
 6. **Filtro antes de gastar:** la foto se valida (tamaño y formato) antes de llamar a la IA.

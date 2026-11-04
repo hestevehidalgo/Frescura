@@ -133,6 +133,16 @@ Los pasos están en la **Parte 2** de [`publicacion.md`](publicacion.md): una co
 Opcional: para cambiar el tope diario (por defecto US$0,25), en Supabase → **Edge Functions →
 Secrets** agrega `DAILY_LIMIT_USD` con el valor en dólares (por ejemplo `0.5`).
 
+## 11. Madurez con foto
+
+1. En Supabase → **SQL Editor** → **New query**, pega el contenido de
+   `supabase/migrations/20261105000000_photo_quota.sql` y toca **Run** (`Success`).
+2. En PowerShell, dentro de la carpeta `Frescura`:
+   ```bash
+   npx supabase functions deploy estimate-ripeness --use-api
+   ```
+3. Prueba: **+** → toca **Palta** → en "Para guardar", **Madurez con foto**.
+
 ## Ver cuánto se está gastando
 
 En Supabase → **SQL Editor**, pega el contenido de `scripts/cost-report.sql` y toca **Run**.

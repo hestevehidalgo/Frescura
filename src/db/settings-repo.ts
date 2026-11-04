@@ -22,6 +22,8 @@ export type Settings = {
   notificationPromptAnswered: boolean;
   /** Aceptó que la foto de la boleta se envíe a la IA para leerla. */
   receiptPhotoConsent: boolean;
+  /** Aceptó el aviso antes de mandar la foto de un producto para ver su madurez. */
+  productPhotoConsent: boolean;
   /** Recetas: dieta, alergias y equipamiento de la casa. */
   diet: Diet;
   avoidAllergens: Allergen[];
@@ -46,6 +48,7 @@ export const DEFAULT_SETTINGS: Settings = {
   pantryBasics: ['sal', 'aceite', 'azucar', 'harina', 'ajo'],
   notificationPromptAnswered: false,
   receiptPhotoConsent: false,
+  productPhotoConsent: false,
   diet: 'none',
   avoidAllergens: [],
   equipment: ['olla', 'sarten', 'horno', 'microondas'],

@@ -19,6 +19,7 @@ import { ThemedText } from '@/components/themed-text';
 import { useToast } from '@/components/undo-toast';
 import { removeItems } from '@/db/inventory-repo';
 import { deleteReceipt, insertReceipt } from '@/db/receipts-repo';
+import { isBackendConfigured } from '@/config/backend';
 import { saveSettings } from '@/db/settings-repo';
 import { createCustomProduct, searchCustomProducts } from '@/db/products-repo';
 import { useDb } from '@/db/provider';
@@ -32,6 +33,7 @@ import {
   type Product,
 } from '@/features/catalog/catalog';
 import { LOCATION_ICON } from '@/features/inventory/components/action-sheet';
+import { ExpiryDatePicker } from '@/features/inventory/components/date-picker';
 import { addToInventory } from '@/features/inventory/service';
 import { parseSpokenList } from '@/features/inventory/spoken-list';
 import {
@@ -40,11 +42,20 @@ import {
   useSettings,
   useToday,
 } from '@/features/inventory/store';
+import { captureProductPhoto } from '@/features/receipts/capture';
+import {
+  requestRipeness,
+  ripeFromStage,
+  ripenessErrorKey,
+  ripenessNote,
+  supportsRipenessPhoto,
+} from '@/features/ripeness/ripeness';
 import { STORES } from '@/features/stats/stores';
 import { joinList, t, tn } from '@/i18n';
-import { addDays } from '@/lib/dates';
+import { addDays, formatShort, type IsoDate } from '@/lib/dates';
 import { parsePrice } from '@/lib/money';
-import { formatQuantity } from '@/lib/quantity';
+import { formatQuantity, quantityStep } from '@/lib/quantity';
+import { useSingleFlight } from '@/lib/single-flight';
 import { capitalize } from '@/lib/text';
 import { MIN_TOUCH, radius, spacing, useThemeColors } from '@/theme';
 
@@ -57,6 +68,10 @@ type Entry = {
   ripe: boolean | null;
   /** Precio tal como lo escribe el usuario ("1290" o "$1.290"). */
   priceText: string;
+  /** Fecha del envase (o elegida a mano) para este lote; si no hay, se estima. */
+  date?: { value: IsoDate; source: 'printed' | 'user' };
+  /** Lo que dijo la IA sobre la madurez, para mostrarlo ("Pintón: lista en 2 días"). */
+  ripeNote?: string;
 };
 
 let keySequence = 0;
@@ -98,6 +113,12 @@ export default function AddScreen() {
   const [listOpen, setListOpen] = useState(false);
   const [listText, setListText] = useState('');
   const [listUnknown, setListUnknown] = useState<string[]>([]);
+  // Lote al que se le está poniendo la fecha del envase.
+  const [dateFor, setDateFor] = useState<string | null>(null);
+  // Madurez con foto: lote que espera el aviso de privacidad y lote que se está analizando.
+  const [photoConsentFor, setPhotoConsentFor] = useState<string | null>(null);
+  const [ripenessBusy, setRipenessBusy] = useState<string | null>(null);
+  const once = useSingleFlight();
   // Alto del panel "Para guardar", para que nunca tape la grilla.
   const [basketHeight, setBasketHeight] = useState(0);
 
@@ -203,6 +224,8 @@ export default function AddScreen() {
           ripe: entry.ripe ?? undefined,
           priceClp: parsePrice(entry.priceText),
           receiptId,
+          printedDate: entry.date?.value,
+          printedSource: entry.date?.source,
         });
         ids.push(item.id);
       }
@@ -230,6 +253,78 @@ export default function AddScreen() {
       }
       toast(t('toasts.error'));
       setSaving(false);
+    }
+  };
+
+  /** Separa una unidad en otro lote, para ponerle otra fecha (dos yogures que vencen distinto). */
+  const splitLot = (entry: Entry) => {
+    const step = quantityStep(entry.product.unit);
+    if (entry.quantity < step * 2 - 1e-9) {
+      return;
+    }
+    const lot: Entry = {
+      ...entry,
+      key: nextKey(entry.product.id),
+      quantity: step,
+      date: undefined,
+    };
+    setBasket((prev) => {
+      const index = prev.findIndex((e) => e.key === entry.key);
+      const next = prev.map((e) =>
+        e.key === entry.key ? { ...e, quantity: Math.round((e.quantity - step) * 1000) / 1000 } : e,
+      );
+      next.splice(index + 1, 0, lot);
+      return next;
+    });
+    setDateFor(lot.key);
+  };
+
+  const dateEntry = basket.find((e) => e.key === dateFor) ?? null;
+
+  /** Foto de la fruta → la IA dice la etapa → la app marca "¿Madura?" (las fechas, la tabla). */
+  const checkRipeness = async (entry: Entry, consented = false) => {
+    const productId = entry.product.id;
+    if (!supportsRipenessPhoto(productId)) {
+      return;
+    }
+    if (!isBackendConfigured()) {
+      toast(t('ripeness.errors.not_configured'));
+      return;
+    }
+    if (!consented && !settings?.productPhotoConsent) {
+      setPhotoConsentFor(entry.key);
+      return;
+    }
+    const photo = await captureProductPhoto().catch(() => 'cancelled' as const);
+    if (photo === 'cancelled') {
+      return;
+    }
+    if (photo === 'denied') {
+      toast(t(ripenessErrorKey('denied')));
+      return;
+    }
+    setRipenessBusy(entry.key);
+    const result = await requestRipeness(photo.base64, productId);
+    setRipenessBusy(null);
+    if (!result.ok) {
+      toast(t(ripenessErrorKey(result.error)));
+      return;
+    }
+    const ripe = ripeFromStage(result.result);
+    updateEntry(entry.key, {
+      ...(ripe !== null ? { ripe } : {}),
+      ripeNote: ripenessNote(result.result),
+    });
+    toast(tn('ripeness.photosLeft', result.photosLeft));
+  };
+
+  const acceptPhotoConsent = async () => {
+    const entry = basket.find((e) => e.key === photoConsentFor);
+    await saveSettings(db, { productPhotoConsent: true });
+    notifySettingsChanged();
+    setPhotoConsentFor(null);
+    if (entry) {
+      await checkRipeness(entry, true);
     }
   };
 
@@ -390,16 +485,16 @@ export default function AddScreen() {
               <View key={entry.key} style={styles.basketEntry}>
                 <View style={styles.basketRow}>
                   <ThemedText style={styles.resultEmoji}>{entry.product.emoji}</ThemedText>
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={() => {
-                      setQuantityFor(entry);
-                    }}
-                    style={styles.flex}>
-                    <ThemedText style={styles.basketName} numberOfLines={1}>
-                      {entry.displayName} · {formatQuantity(entry.quantity, entry.product.unit)}
-                    </ThemedText>
-                  </Pressable>
+                  <ThemedText style={[styles.basketName, styles.flex]} numberOfLines={1}>
+                    {entry.displayName}
+                  </ThemedText>
+                  <QuantityStepper
+                    compact
+                    value={entry.quantity}
+                    unit={entry.product.unit}
+                    label={t('add.quantityOf', { name: entry.displayName })}
+                    onChange={(quantity) => updateEntry(entry.key, { quantity })}
+                  />
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={t('add.remove', { name: entry.displayName })}
@@ -439,6 +534,21 @@ export default function AddScreen() {
                       updateEntry(entry.key, { location: next ?? entry.location });
                     }}
                   />
+                  <Chip
+                    icon="calendar-outline"
+                    label={entry.date ? formatShort(entry.date.value) : t('add.packageDate')}
+                    selected={entry.date !== undefined}
+                    accessibilityLabel={t('add.packageDateOf', { name: entry.displayName })}
+                    onPress={() => setDateFor(entry.key)}
+                  />
+                  {entry.quantity >= quantityStep(entry.product.unit) * 2 - 1e-9 && (
+                    <Chip
+                      icon="git-branch-outline"
+                      label={t('add.otherLot')}
+                      accessibilityLabel={t('add.otherLotHint', { name: entry.displayName })}
+                      onPress={() => splitLot(entry)}
+                    />
+                  )}
                   {entry.product.ripeness && (
                     <Chip
                       label={`${t('add.ripeQuestion')} ${entry.ripe ? t('common.yes') : t('common.no')}`}
@@ -446,7 +556,24 @@ export default function AddScreen() {
                       onPress={() => updateEntry(entry.key, { ripe: !entry.ripe })}
                     />
                   )}
+                  {supportsRipenessPhoto(entry.product.id) && (
+                    <Chip
+                      icon="camera-outline"
+                      label={
+                        ripenessBusy === entry.key ? t('ripeness.analyzing') : t('ripeness.button')
+                      }
+                      onPress={() => void once(() => checkRipeness(entry))}
+                    />
+                  )}
                 </View>
+                {entry.ripeNote && (
+                  <View style={styles.ripeNote}>
+                    <Ionicons name="sparkles-outline" size={14} color={c.primary} />
+                    <ThemedText variant="muted" style={[styles.hint, styles.flex]}>
+                      {entry.ripeNote}
+                    </ThemedText>
+                  </View>
+                )}
               </View>
             ))}
           </ScrollView>
@@ -535,6 +662,51 @@ export default function AddScreen() {
             />
           ))}
         </ChipRow>
+      </Sheet>
+
+      <Sheet
+        visible={dateEntry !== null}
+        onClose={() => setDateFor(null)}
+        title={t('add.packageDateTitle', { name: dateEntry?.displayName.toLowerCase() ?? '' })}
+        subtitle={
+          dateEntry ? formatQuantity(dateEntry.quantity, dateEntry.product.unit) : undefined
+        }>
+        {dateEntry && (
+          <ExpiryDatePicker
+            today={today}
+            onPick={(value, source) => {
+              updateEntry(dateEntry.key, { date: { value, source } });
+              setDateFor(null);
+            }}
+          />
+        )}
+        {dateEntry?.date && (
+          <Button
+            variant="ghost"
+            label={t('add.estimateInstead')}
+            onPress={() => {
+              updateEntry(dateEntry.key, { date: undefined });
+              setDateFor(null);
+            }}
+          />
+        )}
+      </Sheet>
+
+      <Sheet
+        visible={photoConsentFor !== null}
+        onClose={() => setPhotoConsentFor(null)}
+        title={t('ripeness.consentTitle')}>
+        <ThemedText>{t('ripeness.consentBody')}</ThemedText>
+        <Button
+          icon="camera"
+          label={t('ripeness.consentAccept')}
+          onPress={() => void once(acceptPhotoConsent)}
+        />
+        <Button
+          variant="ghost"
+          label={t('common.cancel')}
+          onPress={() => setPhotoConsentFor(null)}
+        />
       </Sheet>
 
       <Sheet
@@ -732,6 +904,7 @@ const styles = StyleSheet.create({
   remove: { minWidth: MIN_TOUCH - 8, alignItems: 'center' },
   purchasedRow: { gap: spacing.xs },
   storeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  ripeNote: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginLeft: 36 },
   listInput: { minHeight: 110, paddingTop: spacing.sm, paddingBottom: spacing.sm },
   input: {
     minHeight: MIN_TOUCH + 4,

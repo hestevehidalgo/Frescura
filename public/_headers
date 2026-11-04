@@ -1,0 +1,8 @@
+# Encabezados para Cloudflare Pages o Netlify (versión web de Frescura).
+# La base de datos local de la versión web (expo-sqlite) necesita "aislamiento de origen".
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+  Cross-Origin-Resource-Policy: same-origin
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin

@@ -1,0 +1,2 @@
+# Cualquier ruta (/recipes, /summary…) carga la app; Expo Router decide qué pantalla mostrar.
+/*    /index.html   200

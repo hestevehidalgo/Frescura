@@ -9,6 +9,7 @@ avisa a tiempo y sugiere recetas con lo que está por vencer.
 - Cómo instalar y correr el proyecto: [`docs/setup.md`](docs/setup.md)
 - Activar el escaneo de boletas: [`docs/setup-backend.md`](docs/setup-backend.md)
 - Publicar en Google Play: [`docs/publicacion.md`](docs/publicacion.md)
+- Publicar la versión web gratis: [`docs/web.md`](docs/web.md)
 - Costos y proyecciones: [`docs/costos.md`](docs/costos.md)
 - Errores corregidos en la fase 6: [`docs/errores-fase-6.md`](docs/errores-fase-6.md)
 - Mercado y plan de marketing: [`docs/marketing.md`](docs/marketing.md)

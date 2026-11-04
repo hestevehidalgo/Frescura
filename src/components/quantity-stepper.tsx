@@ -12,6 +12,10 @@ type Props = {
   onChange: (value: number) => void;
   min?: number;
   max?: number;
+  /** Versión chica para listas (los botones igual tienen 44 pt de área táctil). */
+  compact?: boolean;
+  /** Para el lector de pantalla: de qué es la cantidad. */
+  label?: string;
 };
 
 function round(n: number): number {
@@ -19,7 +23,7 @@ function round(n: number): number {
 }
 
 /** Botones − y + con la cantidad al medio. Sin escribir. */
-export function QuantityStepper({ value, unit, onChange, min, max }: Props) {
+export function QuantityStepper({ value, unit, onChange, min, max, compact, label }: Props) {
   const c = useThemeColors();
   const step = quantityStep(unit);
   const lower = min ?? step;
@@ -33,15 +37,20 @@ export function QuantityStepper({ value, unit, onChange, min, max }: Props) {
       accessibilityState={{ disabled: !enabled }}
       disabled={!enabled}
       onPress={() => onChange(round(next))}
-      style={[styles.button, { backgroundColor: c.surfaceAlt, opacity: enabled ? 1 : 0.4 }]}>
-      <Ionicons name={icon} size={24} color={c.text} />
+      hitSlop={compact ? 6 : undefined}
+      style={[
+        compact ? styles.buttonCompact : styles.button,
+        { backgroundColor: c.surfaceAlt, opacity: enabled ? 1 : 0.4 },
+      ]}>
+      <Ionicons name={icon} size={compact ? 18 : 24} color={c.text} />
     </Pressable>
   );
 
   return (
     <View
-      style={styles.row}
+      style={compact ? styles.rowCompact : styles.row}
       accessible
+      accessibilityLabel={label}
       accessibilityRole="adjustable"
       accessibilityValue={{ text: formatQuantity(value, unit) }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
@@ -50,7 +59,9 @@ export function QuantityStepper({ value, unit, onChange, min, max }: Props) {
         if (e.nativeEvent.actionName === 'decrement' && canDecrease) onChange(round(value - step));
       }}>
       {button('remove', canDecrease, value - step, t('add.decrease'))}
-      <ThemedText style={styles.value}>{formatQuantity(value, unit)}</ThemedText>
+      <ThemedText style={compact ? styles.valueCompact : styles.value}>
+        {formatQuantity(value, unit)}
+      </ThemedText>
       {button('add', canIncrease, value + step, t('add.increase'))}
     </View>
   );
@@ -66,4 +77,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   value: { fontSize: 22, fontWeight: '700', minWidth: 90, textAlign: 'center' },
+  rowCompact: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  buttonCompact: {
+    width: MIN_TOUCH - 12,
+    height: MIN_TOUCH - 12,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  valueCompact: { fontSize: 15, fontWeight: '700', minWidth: 52, textAlign: 'center' },
 });

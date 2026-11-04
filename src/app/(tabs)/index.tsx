@@ -152,12 +152,11 @@ export default function HomeScreen() {
           style={[styles.searchInput, { color: c.text }]}
         />
       </View>
-      <View style={styles.filterRow}>
+      <View>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filters}
-          style={styles.flex}>
+          contentContainerStyle={styles.filters}>
           <Chip
             label={t('home.filterAll')}
             selected={location === 'all'}
@@ -173,11 +172,26 @@ export default function HomeScreen() {
             />
           ))}
         </ScrollView>
+      </View>
+      <View style={styles.listToolbar}>
+        <ThemedText variant="muted" style={styles.small}>
+          {tn(
+            'home.itemCount',
+            home.sections.reduce((n, section) => n + section.data.length, 0),
+          )}
+        </ThemedText>
         <Pressable
           accessibilityRole="button"
+          accessibilityLabel={selecting ? t('common.cancel') : t('home.selectHint')}
           onPress={() => (selecting ? stopSelecting() : setSelecting(true))}
+          hitSlop={8}
           style={styles.selectToggle}>
-          <ThemedText style={{ color: c.primary, fontWeight: '600' }}>
+          <Ionicons
+            name={selecting ? 'close-circle-outline' : 'checkmark-done-outline'}
+            size={18}
+            color={c.primary}
+          />
+          <ThemedText style={[styles.small, { color: c.primary, fontWeight: '600' }]}>
             {selecting ? t('common.cancel') : t('home.select')}
           </ThemedText>
         </Pressable>
@@ -295,9 +309,21 @@ const styles = StyleSheet.create({
     minHeight: MIN_TOUCH,
   },
   searchInput: { flex: 1, fontSize: 16, minHeight: MIN_TOUCH },
-  filterRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   filters: { gap: spacing.sm, paddingRight: spacing.sm },
-  selectToggle: { minHeight: MIN_TOUCH, justifyContent: 'center', paddingLeft: spacing.xs },
+  listToolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: -spacing.xs,
+  },
+  small: { fontSize: 14, lineHeight: 20 },
+  selectToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    minHeight: MIN_TOUCH,
+    paddingLeft: spacing.sm,
+  },
   noResults: { textAlign: 'center', paddingVertical: spacing.lg },
   sectionHeader: {
     flexDirection: 'row',

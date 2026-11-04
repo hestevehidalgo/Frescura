@@ -2,6 +2,38 @@
 
 Registro de decisiones técnicas y de producto, con su motivo. Lo más reciente va arriba.
 
+## 2026-11-05 · Correcciones pedidas por el dueño
+
+### Logo al abrir (1 segundo)
+
+Se muestra la hoja y el nombre 1 segundo y se desvanece. La pantalla de carga nativa se mantiene
+hasta que aparece el logo para que no haya un parpadeo. Sin dependencias nuevas.
+
+### "Seleccionar" en su propia fila
+
+Estaba pegado a los filtros y cortaba "Congelador". Ahora va más chico, con ícono, al lado del
+total de productos.
+
+### Cantidad y lotes al agregar
+
+Cada producto de "Para guardar" muestra − cantidad + (antes había que mantener presionado). Se
+puede poner la fecha del envase por lote y separar una unidad en "Otra fecha": dos yogures que
+vencen el 15 y el 16 quedan como dos lotes y en Inicio se marca "Usa este primero".
+
+### Madurez con foto (IA), con cuota
+
+Pedido por el dueño. Solo para palta, plátano, pera, durazno y tomate. **La IA solo dice la etapa**
+(verde, pintón, maduro, muy maduro); la app marca "¿Madura?" y las fechas salen de la tabla, así
+la IA nunca alarga una vida útil. Foto de 512 px, `max_tokens` 60, unos US$0,0001 por foto.
+Cuota de 10 fotos al mes (`PHOTO_MONTHLY_LIMIT`), mismo freno diario y límite por minuto. Aviso de
+privacidad la primera vez. Se actualizó la política de privacidad y el formulario de Google Play.
+
+### Versión web: Cloudflare Pages (gratis)
+
+GitHub Pages no permite los encabezados que necesita la base de datos de la web, Cloudflare Pages
+sí y es gratis. `public/_headers` y `public/_redirects` se copian solos al compilar
+(`npm run build:web`). Guía en `docs/web.md`.
+
 ## 2026-11-04 · Fase 6 (búsqueda de errores y marketing)
 
 ### Revisión completa antes de publicar

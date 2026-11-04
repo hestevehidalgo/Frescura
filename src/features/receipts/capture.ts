@@ -10,12 +10,19 @@ export type CapturedImage = { base64: string; uri: string };
 export type CaptureResult = CapturedImage | 'cancelled' | 'denied';
 
 /** Ancho al que se lleva la foto: nunca se agranda (agrandar solo gasta más tokens). */
-export function targetWidth(width: number | undefined): number | null {
-  return width !== undefined && width > TARGET_WIDTH ? TARGET_WIDTH : null;
+export function targetWidth(width: number | undefined, max = TARGET_WIDTH): number | null {
+  return width !== undefined && width > max ? max : null;
 }
 
-async function shrink(uri: string, width: number | undefined): Promise<CapturedImage> {
-  const target = targetWidth(width);
+/** Para ver la madurez de una fruta basta una foto chica: menos tokens, menos costo. */
+const PRODUCT_PHOTO_WIDTH = 512;
+
+async function shrink(
+  uri: string,
+  width: number | undefined,
+  max = TARGET_WIDTH,
+): Promise<CapturedImage> {
+  const target = targetWidth(width, max);
   const context = ImageManipulator.manipulate(uri);
   if (target !== null) {
     context.resize({ width: target });
@@ -48,4 +55,18 @@ export async function captureReceipt(source: 'camera' | 'library'): Promise<Capt
     return 'cancelled';
   }
   return shrink(asset.uri, asset.width);
+}
+
+/** Foto de una fruta o verdura con la cámara, achicada a 512 px. */
+export async function captureProductPhoto(): Promise<CaptureResult> {
+  const permission = await ImagePicker.requestCameraPermissionsAsync();
+  if (!permission.granted) {
+    return 'denied';
+  }
+  const result = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 1 });
+  const asset = result.canceled ? undefined : result.assets[0];
+  if (!asset) {
+    return 'cancelled';
+  }
+  return shrink(asset.uri, asset.width, PRODUCT_PHOTO_WIDTH);
 }

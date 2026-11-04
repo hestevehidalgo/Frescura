@@ -42,6 +42,8 @@ export type AddInput = {
   receiptId?: string | null;
   /** Fecha real del envase, si se conoce. */
   printedDate?: IsoDate;
+  /** De dónde viene esa fecha: leída del envase (por defecto) o elegida a mano ("en 3 días"). */
+  printedSource?: 'printed' | 'user';
 };
 
 export async function addToInventory(db: Db, input: AddInput): Promise<InventoryItem> {
@@ -49,7 +51,9 @@ export async function addToInventory(db: Db, input: AddInput): Promise<Inventory
   const purchasedAt = input.purchasedAt ?? todayLocal();
   const factor = await getShelfLifeFactor(db, input.product.id);
   const expiry = input.printedDate
-    ? printedExpiry(input.printedDate)
+    ? input.printedSource === 'user'
+      ? userExpiry(input.printedDate)
+      : printedExpiry(input.printedDate)
     : estimateExpiry({ product: input.product, location, purchasedAt, ripe: input.ripe, factor });
   return insertItem(db, {
     productId: input.product.id,
