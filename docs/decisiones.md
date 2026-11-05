@@ -2,6 +2,47 @@
 
 Registro de decisiones técnicas y de producto, con su motivo. Lo más reciente va arriba.
 
+## 2026-11-05 (tarde) · Lanzamiento y monetización
+
+### Monetización: gratis + Premium, sin anuncios
+
+Premium a $1.990 al mes o $14.990 al año, activado cerca del mes 4 (necesita development build y
+`expo-iap`). Lo básico queda gratis siempre. Los anuncios pagan centavos con pocos usuarios y van
+contra la privacidad. Detalle, trámites, fondos y proyecciones en `docs/monetizacion.md`
+(`scripts/proyecciones.py`).
+
+### Ajustes: sin horario silencioso
+
+Con un solo aviso a la semana, elegido entre 7:00 y 21:30, el horario silencioso no servía y
+movía el aviso de las 7:00 a las 8:00 sin explicar por qué. Se quitó de Ajustes y del planificador.
+Las categorías que avisan quedan plegadas en "Avanzado".
+
+### Aviso de alto riesgo, opcional y apagado
+
+El día antes de que venza carne, pollo, pescado o comida cocinada, a la hora del resumen. Máximo
+uno al día. Apagado por defecto para respetar que el dueño no quiere avisos invasivos.
+
+### Ranking: falta de la proteína principal pesa el doble
+
+Solo carnes, aves, pescados y algunos crudos de otras categorías (hamburguesas, pescado congelado,
+longaniza, chorizo). El pollo asado no, porque se compra listo. Con más peso (o incluyéndolo) se
+rompía el criterio de la fase 3 (las 5 primeras usan al menos 2 productos por vencer).
+
+### Lista de compras local
+
+Tabla `shopping_items` (migración 4), en el respaldo y en "Borrar todos mis datos". Sin servidor.
+Se abre desde el carro arriba; "Agregar lo que falta" en cada receta; aviso "Ya tienes esto".
+
+### Compartir el mes como imagen
+
+`react-native-view-shot` (incluido en Expo Go) captura una tarjeta sin compras ni precios, y
+`expo-sharing` la comparte. En la web, o si falla, se comparte el texto. Solo se ofrece con plata
+salvada o con al menos 5 productos cerrados en el mes.
+
+### Dependencias nuevas
+
+- `react-native-view-shot`: crear la imagen para compartir el mes. Viene en Expo Go.
+
 ## 2026-11-05 · Correcciones pedidas por el dueño
 
 ### Logo al abrir (1 segundo)
