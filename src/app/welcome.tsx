@@ -45,6 +45,8 @@ export default function WelcomeScreen() {
   const finish = async () => {
     await update({ onboardingDone: true });
     router.replace('/');
+    // Primer uso: directo a agregar lo que compró, con una ayuda corta.
+    router.push({ pathname: '/add', params: { first: '1' } });
   };
 
   const last = step === 2;

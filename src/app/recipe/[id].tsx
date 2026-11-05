@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Button, Chip, ChipRow, type IconName } from '@/components/button';
 import { Sheet } from '@/components/sheet';
@@ -18,11 +18,17 @@ import { cookedActions, itemsUsedBy, type UsedAmount } from '@/features/recipes/
 import { setPendingAiRecipe } from '@/features/recipes/pending';
 import type { IngredientMatch } from '@/features/recipes/ranking';
 import type { Recipe } from '@/features/recipes/recipes';
+import {
+  clampServings,
+  MAX_SERVINGS,
+  MIN_SERVINGS,
+  scaleAmount,
+} from '@/features/recipes/servings';
 import { useRecipe } from '@/features/recipes/use-recipe';
 import { t, tn, type MessageKey } from '@/i18n';
 import { formatDecimal, formatQuantity } from '@/lib/quantity';
 import { useSingleFlight } from '@/lib/single-flight';
-import { radius, spacing, useThemeColors } from '@/theme';
+import { MIN_TOUCH, radius, spacing, useThemeColors } from '@/theme';
 
 const USED_OPTIONS: [UsedAmount, MessageKey][] = [
   ['all', 'recipes.usedAll'],
@@ -48,7 +54,15 @@ function expiryNote(item: InventoryItem, today: IsoDate): string | null {
     : t('recipes.expiresSoon', { when: relativeExpiryLabel(item.expiresAt, today).toLowerCase() });
 }
 
-function IngredientLine({ match, today }: { match: IngredientMatch; today: IsoDate }) {
+function IngredientLine({
+  match,
+  today,
+  factor,
+}: {
+  match: IngredientMatch;
+  today: IsoDate;
+  factor: number;
+}) {
   const c = useThemeColors();
   const { ingredient, item, basic } = match;
   const status: { icon: IconName; color: string; label: string } = item
@@ -65,12 +79,41 @@ function IngredientLine({ match, today }: { match: IngredientMatch; today: IsoDa
       <View style={styles.flex}>
         <ThemedText>
           {capitalize(ingredient.n)}
-          <ThemedText variant="muted">{`  ${amountLabel(ingredient.q, ingredient.u)}`}</ThemedText>
+          <ThemedText variant="muted">{`  ${amountLabel(scaleAmount(ingredient.q, ingredient.u, factor), ingredient.u)}`}</ThemedText>
         </ThemedText>
         <ThemedText style={[styles.small, { color: status.color, fontWeight: '600' }]}>
           {note ? `${status.label} · ${note}` : status.label}
         </ThemedText>
       </View>
+    </View>
+  );
+}
+
+/** Porciones con − y +: las cantidades de los ingredientes se recalculan. */
+function ServingsControl({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const c = useThemeColors();
+  const button = (icon: 'remove' | 'add', next: number, label: string, enabled: boolean) => (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: !enabled }}
+      disabled={!enabled}
+      hitSlop={6}
+      onPress={() => onChange(next)}
+      style={[
+        styles.servingsButton,
+        { backgroundColor: c.surfaceAlt, opacity: enabled ? 1 : 0.4 },
+      ]}>
+      <Ionicons name={icon} size={18} color={c.text} />
+    </Pressable>
+  );
+  return (
+    <View style={styles.servings} accessible={false}>
+      {button('remove', value - 1, t('recipes.fewerServings'), value > MIN_SERVINGS)}
+      <ThemedText style={styles.bold} accessibilityLiveRegion="polite">
+        {tn('recipes.servings', value)}
+      </ThemedText>
+      {button('add', value + 1, t('recipes.moreServings'), value < MAX_SERVINGS)}
     </View>
   );
 }
@@ -86,6 +129,8 @@ export default function RecipeDetailScreen() {
   const { runEach } = useItemActions();
   const { recipe, ranked, saved } = useRecipe(id);
   const [cooking, setCooking] = useState(false);
+  // Porciones elegidas (null = las de la receta).
+  const [servings, setServings] = useState<number | null>(null);
   const [used, setUsed] = useState<Record<string, UsedAmount>>({});
 
   if (recipe === null) {
@@ -184,11 +229,22 @@ export default function RecipeDetailScreen() {
         </View>
 
         <View style={styles.block}>
-          <ThemedText variant="subtitle" accessibilityRole="header">
-            {t('recipes.ingredients')}
-          </ThemedText>
+          <View style={styles.ingredientsHeader}>
+            <ThemedText variant="subtitle" accessibilityRole="header" style={styles.flex}>
+              {t('recipes.ingredients')}
+            </ThemedText>
+            <ServingsControl
+              value={servings ?? recipe.s}
+              onChange={(value) => setServings(clampServings(value))}
+            />
+          </View>
           {ranked.matches.map((match, index) => (
-            <IngredientLine key={`${match.ingredient.n}-${index}`} match={match} today={today} />
+            <IngredientLine
+              key={`${match.ingredient.n}-${index}`}
+              match={match}
+              today={today}
+              factor={(servings ?? recipe.s) / recipe.s}
+            />
           ))}
         </View>
 
@@ -278,6 +334,15 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ingredientsHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  servings: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  servingsButton: {
+    width: MIN_TOUCH - 12,
+    height: MIN_TOUCH - 12,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },

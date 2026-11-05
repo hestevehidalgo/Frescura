@@ -3,6 +3,7 @@
 //           − penalización por ingredientes que faltan.
 
 import type { InventoryItem } from '@/db/inventory-repo';
+import { getCatalogProduct } from '@/features/catalog/catalog';
 import { daysBetween, type IsoDate } from '@/lib/dates';
 
 import {
@@ -44,6 +45,17 @@ export type RankedRecipe = {
 const WEEK = 7;
 const MISSING_PENALTY = 3;
 const OWNED_WEIGHT = 3;
+
+// Categorías del ingrediente principal: si falta, la receta casi no se puede hacer.
+const MAIN_CATEGORIES = new Set(['carnes', 'aves', 'pescados']);
+
+/** Lo que pesa que falte un ingrediente: el doble si es la carne, el pollo o el pescado. */
+export function missingCost(ingredient: RecipeIngredient): number {
+  const main = productIdsOf(ingredient).some((id) =>
+    MAIN_CATEGORIES.has(getCatalogProduct(id)?.categoryId ?? ''),
+  );
+  return main ? 2 : 1;
+}
 
 /** Peso por urgencia: lo que vence antes pesa más. Lo vencido no se sugiere cocinar. */
 export function urgencyWeight(item: InventoryItem, today: IsoDate): number {
@@ -122,7 +134,8 @@ export function scoreRecipe(
 
   const urgency = expiring.reduce((sum, item) => sum + urgencyWeight(item, today), 0);
   const ownedFraction = required.length === 0 ? 1 : owned.length / required.length;
-  const score = urgency + OWNED_WEIGHT * ownedFraction - MISSING_PENALTY * missing.length;
+  const missingWeight = missing.reduce((sum, ingredient) => sum + missingCost(ingredient), 0);
+  const score = urgency + OWNED_WEIGHT * ownedFraction - MISSING_PENALTY * missingWeight;
 
   return { recipe, score: Math.round(score * 100) / 100, matches, expiring, missing };
 }

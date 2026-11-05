@@ -16,11 +16,16 @@ import { estimateExpiry } from '@/features/expiry/expiry';
 import { LOCATION_ICON } from '@/features/inventory/components/action-sheet';
 import { notifyInventoryChanged } from '@/features/inventory/store';
 import { getPendingReview, setPendingReview } from '@/features/receipts/pending';
-import { saveReview, undoSavedReview, type ReviewRow } from '@/features/receipts/review';
+import {
+  reviewMismatch,
+  saveReview,
+  undoSavedReview,
+  type ReviewRow,
+} from '@/features/receipts/review';
 import { t, tn } from '@/i18n';
 import { formatDate, formatShort } from '@/lib/dates';
-import { formatClp } from '@/lib/money';
-import { formatQuantity } from '@/lib/quantity';
+import { formatClp, parsePrice } from '@/lib/money';
+import { formatDecimal, formatQuantity, parseDecimal } from '@/lib/quantity';
 import { MIN_TOUCH, radius, spacing, useThemeColors } from '@/theme';
 
 export default function ReceiptReviewScreen() {
@@ -34,6 +39,8 @@ export default function ReceiptReviewScreen() {
   const [showExcluded, setShowExcluded] = useState(false);
   const [editing, setEditing] = useState<ReviewRow | null>(null);
   const [editName, setEditName] = useState('');
+  const [editQuantity, setEditQuantity] = useState('');
+  const [editPrice, setEditPrice] = useState('');
   const [duplicate, setDuplicate] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -75,6 +82,15 @@ export default function ReceiptReviewScreen() {
   const update = (key: string, patch: Partial<ReviewRow>) =>
     setRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch } : r)));
 
+  // Se recalcula si la persona corrige un precio.
+  const mismatchClp = reviewMismatch(rows, review.totalClp, review.discountsClp);
+  const parsedQuantity = parseDecimal(editQuantity);
+  const parsedPrice = parsePrice(editPrice);
+  const editValid =
+    editName.trim().length > 0 &&
+    parsedQuantity !== null &&
+    parsedQuantity > 0 &&
+    parsedPrice !== null;
   const food = rows.filter((r) => r.isFood);
   const excluded = rows.filter((r) => !r.isFood);
   const included = rows.filter((r) => r.include);
@@ -125,6 +141,8 @@ export default function ReceiptReviewScreen() {
           accessibilityHint={t('review.editName')}
           onPress={() => {
             setEditName(row.name);
+            setEditQuantity(formatDecimal(row.quantity, 3));
+            setEditPrice(String(row.priceClp));
             setEditing(row);
           }}>
           <ThemedText style={styles.name}>{row.name}</ThemedText>
@@ -174,11 +192,11 @@ export default function ReceiptReviewScreen() {
           )}
         </View>
 
-        {review.mismatchClp !== null && (
+        {mismatchClp !== null && (
           <View style={[styles.banner, { backgroundColor: c.warnBg }]}>
             <Ionicons name="warning" size={20} color={c.warnFg} />
             <ThemedText style={[styles.flex, { color: c.warnFg }]}>
-              {t('review.mismatch', { diff: formatClp(Math.abs(review.mismatchClp)) })}
+              {t('review.mismatch', { diff: formatClp(Math.abs(mismatchClp)) })}
             </ThemedText>
           </View>
         )}
@@ -191,6 +209,9 @@ export default function ReceiptReviewScreen() {
           </View>
         )}
 
+        <ThemedText variant="muted" style={styles.small}>
+          {t('review.editHint')}
+        </ThemedText>
         <View style={styles.list}>{food.map(renderRow)}</View>
 
         {excluded.length > 0 && (
@@ -232,23 +253,67 @@ export default function ReceiptReviewScreen() {
       <Sheet
         visible={editing !== null}
         onClose={() => setEditing(null)}
-        title={t('review.editName')}>
+        title={t('review.editLine')}
+        subtitle={editing ? t('review.printed', { text: editing.printed }) : undefined}>
+        <ThemedText style={styles.fieldLabel}>{t('review.editName')}</ThemedText>
         <TextInput
           value={editName}
           onChangeText={setEditName}
-          autoFocus
           accessibilityLabel={t('review.editName')}
           style={[
             styles.input,
             { color: c.text, borderColor: c.border, backgroundColor: c.background },
           ]}
         />
+        <View style={styles.editRow}>
+          <View style={styles.flex}>
+            <ThemedText style={styles.fieldLabel}>
+              {t('review.editQuantity', { unit: editing ? t(`units.${editing.unit}`) : '' })}
+            </ThemedText>
+            <TextInput
+              value={editQuantity}
+              onChangeText={setEditQuantity}
+              keyboardType="decimal-pad"
+              accessibilityLabel={t('review.editQuantityLabel')}
+              style={[
+                styles.input,
+                {
+                  color: c.text,
+                  backgroundColor: c.background,
+                  borderColor:
+                    parsedQuantity === null || parsedQuantity <= 0 ? c.dangerFg : c.border,
+                },
+              ]}
+            />
+          </View>
+          <View style={styles.flex}>
+            <ThemedText style={styles.fieldLabel}>{t('review.editPrice')}</ThemedText>
+            <TextInput
+              value={editPrice}
+              onChangeText={setEditPrice}
+              keyboardType="number-pad"
+              accessibilityLabel={t('review.editPrice')}
+              style={[
+                styles.input,
+                {
+                  color: c.text,
+                  backgroundColor: c.background,
+                  borderColor: parsedPrice === null ? c.dangerFg : c.border,
+                },
+              ]}
+            />
+          </View>
+        </View>
         <Button
           label={t('common.save')}
-          disabled={!editName.trim()}
+          disabled={!editValid}
           onPress={() => {
-            if (editing) {
-              update(editing.key, { name: editName.trim() });
+            if (editing && parsedQuantity !== null && parsedPrice !== null) {
+              update(editing.key, {
+                name: editName.trim(),
+                quantity: parsedQuantity,
+                priceClp: parsedPrice,
+              });
             }
             setEditing(null);
           }}
@@ -287,6 +352,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     padding: spacing.md,
   },
+  fieldLabel: { fontWeight: '600' },
+  editRow: { flexDirection: 'row', gap: spacing.sm },
   input: {
     minHeight: MIN_TOUCH + 4,
     borderWidth: 1,

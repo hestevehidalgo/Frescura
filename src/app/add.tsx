@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Pressable,
@@ -88,6 +88,7 @@ export default function AddScreen() {
   const c = useThemeColors();
   const db = useDb();
   const router = useRouter();
+  const { first } = useLocalSearchParams<{ first?: string }>();
   const toast = useToast();
   const today = useToday();
   const insets = useSafeAreaInsets();
@@ -353,6 +354,12 @@ export default function AddScreen() {
           { paddingBottom: (basket.length > 0 ? basketHeight : 0) + insets.bottom + spacing.lg },
         ]}
         keyboardShouldPersistTaps="handled">
+        {first === '1' && basket.length === 0 && (
+          <View style={[styles.firstHint, { backgroundColor: c.okBg }]}>
+            <Ionicons name="hand-left-outline" size={20} color={c.okFg} />
+            <ThemedText style={[styles.flex, { color: c.okFg }]}>{t('add.firstHint')}</ThemedText>
+          </View>
+        )}
         <View style={[styles.search, { backgroundColor: c.surface, borderColor: c.border }]}>
           <Ionicons name="search" size={18} color={c.textMuted} />
           <TextInput
@@ -903,6 +910,13 @@ const styles = StyleSheet.create({
   basketName: { fontSize: 16, fontWeight: '600' },
   remove: { minWidth: MIN_TOUCH - 8, alignItems: 'center' },
   purchasedRow: { gap: spacing.xs },
+  firstHint: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    alignItems: 'center',
+  },
   storeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   ripeNote: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginLeft: 36 },
   listInput: { minHeight: 110, paddingTop: spacing.sm, paddingBottom: spacing.sm },

@@ -2,7 +2,7 @@ import type { InventoryItem } from '@/db/inventory-repo';
 import { DEFAULT_SETTINGS, type Settings } from '@/db/settings-repo';
 import { getCatalogProduct } from '@/features/catalog/catalog';
 
-import { IOS_LIMIT, PLAN_WEEKS, isQuietTime, planNotifications, summaryTime } from './planner';
+import { IOS_LIMIT, PLAN_WEEKS, planNotifications, riskAlerts, summaryTime } from './planner';
 
 let n = 0;
 function item(
@@ -120,31 +120,16 @@ describe('resumen semanal', () => {
   });
 });
 
-describe('horario silencioso', () => {
-  it('detecta la noche, cruzando la medianoche', () => {
-    expect(isQuietTime(23 * 60, 22 * 60, 8 * 60)).toBe(true);
-    expect(isQuietTime(3 * 60, 22 * 60, 8 * 60)).toBe(true);
-    expect(isQuietTime(18 * 60, 22 * 60, 8 * 60)).toBe(false);
-  });
-
-  it('si el silencio empieza antes de la hora elegida, el aviso pasa a la mañana siguiente', () => {
-    const settings = {
+describe('hora del resumen', () => {
+  it('llega a la hora elegida, también temprano', () => {
+    const [first] = plan([item('yogur', '2026-11-02')], { summaryHour: 7, summaryMinute: 0 });
+    expect([first?.date.getHours(), first?.date.getMinutes()]).toEqual([7, 0]);
+    const late = summaryTime('2026-11-08', {
       ...DEFAULT_SETTINGS,
       summaryHour: 21,
       summaryMinute: 30,
-      quietStart: 21 * 60,
-    };
-    const date = summaryTime('2026-11-08', settings);
-    expect([date.getDate(), date.getHours(), date.getMinutes()]).toEqual([9, 8, 0]);
-    // De madrugada, el final del silencio es el mismo día.
-    const early = summaryTime('2026-11-08', { ...settings, summaryHour: 7, summaryMinute: 0 });
-    expect([early.getDate(), early.getHours()]).toEqual([8, 8]);
-  });
-
-  it('nunca programa de noche', () => {
-    const [first] = plan([item('yogur', '2026-11-02')], { summaryHour: 6, summaryMinute: 0 });
-    expect(first?.date.getHours()).toBe(8);
-    expect(first?.date.getMinutes()).toBe(0);
+    });
+    expect([late.getDate(), late.getHours(), late.getMinutes()]).toEqual([8, 21, 30]);
   });
 });
 
@@ -171,3 +156,47 @@ describe('cambio de horario y límite de iOS', () => {
     expect(result.length).toBeLessThan(IOS_LIMIT);
   });
 });
+
+describe('aviso de alto riesgo (opcional)', () => {
+  const items = () => [
+    item('pollo-entero', '2026-11-03'),
+    item('carne-molida', '2026-11-03'),
+    item('pescado-fresco', '2026-11-05'),
+    item('yogur', '2026-11-03'),
+    item('carne-molida', '2026-11-04', { location: 'freezer' }),
+  ];
+
+  it('apagado por defecto', () => {
+    expect(riskAlerts(input(items()))).toEqual([]);
+  });
+
+  it('avisa el día antes, a la hora del resumen, solo lo de alto riesgo', () => {
+    const alerts = riskAlerts(input(items(), { highRiskAlerts: true }));
+    expect(alerts.map((a) => [a.id, a.date.getDate(), a.date.getHours()])).toEqual([
+      ['risk-2026-11-03', 2, 10],
+      ['risk-2026-11-05', 4, 10],
+    ]);
+    expect(alerts[0]?.title).toBe('Mañana vencen 2 productos delicados');
+    expect(alerts[0]?.body).toMatch(/^Carne molida y pollo entero\./);
+    expect(alerts[1]?.itemId).not.toBeNull();
+  });
+
+  it('no avisa si el aviso ya pasó o si los avisos están apagados', () => {
+    expect(
+      riskAlerts(input([item('pollo-entero', '2026-10-30')], { highRiskAlerts: true })),
+    ).toEqual([]);
+    expect(
+      riskAlerts(input(items(), { highRiskAlerts: true, notificationsEnabled: false })),
+    ).toEqual([]);
+  });
+});
+
+function input(list: InventoryItem[], settings: Partial<Settings> = {}) {
+  return {
+    items: list,
+    lookup: getCatalogProduct,
+    settings: { ...DEFAULT_SETTINGS, ...settings },
+    today: TODAY,
+    now: NOW,
+  };
+}

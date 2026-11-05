@@ -119,6 +119,7 @@ export default function SettingsScreen() {
   const { data: settings } = useSettings();
   const [permission, setPermission] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const toast = useToast();
   const router = useRouter();
   const today = useToday();
@@ -300,53 +301,49 @@ export default function SettingsScreen() {
           </View>
         </View>
         <ToggleRow
-          label={t('settings.longLifeAlerts')}
-          value={settings.longLifeAlerts}
-          onChange={(v) => void update({ longLifeAlerts: v })}
+          label={t('settings.highRiskAlerts')}
+          value={settings.highRiskAlerts}
+          onChange={(v) => void update({ highRiskAlerts: v })}
         />
-        <View style={styles.block}>
-          <ThemedText>
-            {t('settings.quietHours', {
-              from: formatTime(settings.quietStart),
-              to: formatTime(settings.quietEnd),
-            })}
-          </ThemedText>
-          <ChipRow>
-            {[21, 22, 23].map((hour) => (
-              <Chip
-                key={`start-${hour}`}
-                label={t('settings.quietFrom', { time: formatTime(hour * 60) })}
-                selected={settings.quietStart === hour * 60}
-                onPress={() => void update({ quietStart: hour * 60 })}
-              />
-            ))}
-          </ChipRow>
-          <ChipRow>
-            {[7, 8, 9].map((hour) => (
-              <Chip
-                key={`end-${hour}`}
-                label={t('settings.quietTo', { time: formatTime(hour * 60) })}
-                selected={settings.quietEnd === hour * 60}
-                onPress={() => void update({ quietEnd: hour * 60 })}
-              />
-            ))}
-          </ChipRow>
-        </View>
-      </Section>
-
-      <Section title={t('settings.categoriesSection')}>
-        <ChipRow>
-          {alertCategories.map((cat) => (
-            <Chip
-              key={cat.id}
-              label={`${cat.emoji} ${cat.name}`}
-              selected={!settings.mutedCategories.includes(cat.id)}
-              onPress={() =>
-                void update({ mutedCategories: toggleInList(settings.mutedCategories, cat.id) })
-              }
+        <ThemedText variant="muted" style={styles.small}>
+          {t('settings.highRiskAlertsHint')}
+        </ThemedText>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ expanded: advancedOpen }}
+          onPress={() => setAdvancedOpen((v) => !v)}
+          style={styles.advancedToggle}>
+          <ThemedText style={[styles.label, styles.flex]}>{t('settings.advanced')}</ThemedText>
+          <Ionicons
+            name={advancedOpen ? 'chevron-up' : 'chevron-down'}
+            size={20}
+            color={c.textMuted}
+          />
+        </Pressable>
+        {advancedOpen && (
+          <>
+            <ToggleRow
+              label={t('settings.longLifeAlerts')}
+              value={settings.longLifeAlerts}
+              onChange={(v) => void update({ longLifeAlerts: v })}
             />
-          ))}
-        </ChipRow>
+            <ThemedText style={styles.label}>{t('settings.categoriesSection')}</ThemedText>
+            <ChipRow>
+              {alertCategories.map((cat) => (
+                <Chip
+                  key={cat.id}
+                  label={`${cat.emoji} ${cat.name}`}
+                  selected={!settings.mutedCategories.includes(cat.id)}
+                  onPress={() =>
+                    void update({
+                      mutedCategories: toggleInList(settings.mutedCategories, cat.id),
+                    })
+                  }
+                />
+              ))}
+            </ChipRow>
+          </>
+        )}
       </Section>
 
       <Section title={t('settings.kitchenSection')}>
@@ -446,6 +443,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   time: { fontSize: 24, fontWeight: '700', minWidth: 80, textAlign: 'center' },
+  advancedToggle: { flexDirection: 'row', alignItems: 'center', minHeight: MIN_TOUCH },
   small: { fontSize: 14, lineHeight: 20 },
   label: { fontWeight: '600' },
 });

@@ -5,7 +5,7 @@ import { createMigratedDb } from '@/db/test-db';
 
 import type { ParsedReceipt } from '../../../supabase/functions/parse-receipt/logic';
 
-import { buildReview, normalizeRut, saveReview, undoSavedReview } from './review';
+import { buildReview, normalizeRut, reviewMismatch, saveReview, undoSavedReview } from './review';
 
 const TODAY = '2026-10-31';
 
@@ -161,4 +161,12 @@ describe('saveReview', () => {
     expect(await listItems(db)).toHaveLength(0);
     expect(await listReceipts(db)).toHaveLength(0);
   });
+});
+
+it('reviewMismatch se recalcula al corregir un precio', () => {
+  const rows = [{ priceClp: 1000 }, { priceClp: 129 }];
+  // La IA leyó 129 en vez de 1.290: no cuadra con el total de $2.290.
+  expect(reviewMismatch(rows, 2290, 0)).toBe(-1161);
+  expect(reviewMismatch([{ priceClp: 1000 }, { priceClp: 1290 }], 2290, 0)).toBeNull();
+  expect(reviewMismatch(rows, null, 0)).toBeNull();
 });

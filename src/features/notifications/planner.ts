@@ -1,10 +1,11 @@
 // Decide qué avisos programar. Sin efectos: lo prueba planner.test.ts.
 // Regla: la app no es invasiva. Un solo resumen a la semana (por defecto el domingo), y solo si
-// algo vence esa semana. Nunca de noche.
+// algo vence esa semana, a la hora elegida (entre 7:00 y 21:30).
 
 import type { InventoryItem } from '@/db/inventory-repo';
 import type { Settings } from '@/db/settings-repo';
 import type { Product } from '@/features/catalog/catalog';
+import { isHighRisk } from '@/features/expiry/expiry';
 import { joinList, t, tn, type MessageKey } from '@/i18n';
 import { addDays, atLocalTime, nextWeekday, weekdayOf, type IsoDate } from '@/lib/dates';
 import { capitalize } from '@/lib/text';
@@ -14,7 +15,10 @@ export const PLAN_WEEKS = 4;
 export const IOS_LIMIT = 64;
 const MAX_LISTED = 3;
 
-export type NotificationKind = 'summary';
+export type NotificationKind = 'summary' | 'risk';
+
+/** Días hacia adelante para el aviso de alto riesgo (uno por día como máximo). */
+export const RISK_DAYS = 14;
 export const CATEGORY_SINGLE = 'single_item';
 export const CATEGORY_SUMMARY = 'summary';
 
@@ -47,33 +51,12 @@ type PlanInput = {
   now: Date;
 };
 
-function minutesOf(date: Date): number {
-  return date.getHours() * 60 + date.getMinutes();
-}
-
-export function isQuietTime(minutes: number, quietStart: number, quietEnd: number): boolean {
-  if (quietStart === quietEnd) {
-    return false;
-  }
-  return quietStart < quietEnd
-    ? minutes >= quietStart && minutes < quietEnd
-    : minutes >= quietStart || minutes < quietEnd;
-}
-
 /**
- * Hora del resumen fuera del horario silencioso: si cae adentro, se mueve al final del silencio.
- * Si el silencio es de noche (por ejemplo de 21:00 a 08:00) y el resumen cae en la parte de la
- * noche, el final del silencio es al día siguiente, nunca antes de la hora elegida.
+ * Hora del resumen: la que eligió la persona. Solo se puede elegir entre las 7:00 y las 21:30
+ * (Ajustes), así que nunca cae de noche y no hace falta un horario silencioso.
  */
 export function summaryTime(day: IsoDate, settings: Settings): Date {
-  const date = atLocalTime(day, settings.summaryHour, settings.summaryMinute);
-  const minutes = minutesOf(date);
-  if (!isQuietTime(minutes, settings.quietStart, settings.quietEnd)) {
-    return date;
-  }
-  const crossesMidnight = settings.quietStart > settings.quietEnd;
-  const endDay = crossesMidnight && minutes >= settings.quietStart ? addDays(day, 1) : day;
-  return atLocalTime(endDay, Math.floor(settings.quietEnd / 60), settings.quietEnd % 60);
+  return atLocalTime(day, settings.summaryHour, settings.summaryMinute);
 }
 
 function alerts(item: InventoryItem, lookup: PlanInput['lookup'], settings: Settings): boolean {
@@ -152,5 +135,61 @@ export function planNotifications({
     }
   }
 
-  return plan.slice(0, IOS_LIMIT - 4);
+  return [...plan, ...riskAlerts({ items, lookup, settings, today, now })].slice(0, IOS_LIMIT - 4);
+}
+
+/**
+ * Aviso opcional (apagado por defecto): el día antes de que venza algo de alto riesgo (carnes,
+ * pollo, pescados, mariscos, comida cocinada), a la hora del resumen. Uno por día como máximo.
+ */
+export function riskAlerts({
+  items,
+  lookup,
+  settings,
+  today,
+  now,
+}: PlanInput): PlannedNotification[] {
+  if (!settings.notificationsEnabled || !settings.highRiskAlerts) {
+    return [];
+  }
+  const byDate = new Map<IsoDate, InventoryItem[]>();
+  for (const item of items) {
+    const product = lookup(item.productId);
+    if (
+      item.status !== 'active' ||
+      item.location === 'freezer' ||
+      !product ||
+      !isHighRisk(product)
+    ) {
+      continue;
+    }
+    if (item.expiresAt <= today || item.expiresAt > addDays(today, RISK_DAYS)) {
+      continue;
+    }
+    byDate.set(item.expiresAt, [...(byDate.get(item.expiresAt) ?? []), item]);
+  }
+  const result: PlannedNotification[] = [];
+  for (const [date, due] of [...byDate].sort(([a], [b]) => a.localeCompare(b))) {
+    const when = atLocalTime(addDays(date, -1), settings.summaryHour, settings.summaryMinute);
+    const first = due[0];
+    if (when <= now || !first) {
+      continue;
+    }
+    const names = due
+      .map((i) => i.displayName.toLowerCase())
+      .sort((a, b) => a.localeCompare(b, 'es'));
+    result.push({
+      id: `risk-${date}`,
+      kind: 'risk',
+      date: when,
+      title:
+        due.length === 1
+          ? t('notifications.riskTitleOne', { name: first.displayName })
+          : tn('notifications.riskTitleMany', due.length),
+      body: `${capitalize(joinList(names))}. ${t('notifications.riskBody')}`,
+      categoryId: due.length === 1 ? CATEGORY_SINGLE : CATEGORY_SUMMARY,
+      itemId: due.length === 1 ? first.id : null,
+    });
+  }
+  return result;
 }

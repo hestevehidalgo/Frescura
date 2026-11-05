@@ -58,6 +58,22 @@ function tolerance(total: number): number {
   return Math.max(10, Math.round(total * 0.01));
 }
 
+/**
+ * Diferencia entre la suma de las líneas (menos descuentos) y el total impreso, o null si cuadra.
+ * Se recalcula cuando la persona corrige un precio en la revisión.
+ */
+export function reviewMismatch(
+  rows: Pick<ReviewRow, 'priceClp'>[],
+  totalClp: number | null,
+  discountsClp: number,
+): number | null {
+  if (totalClp === null) {
+    return null;
+  }
+  const sum = rows.reduce((acc, row) => acc + row.priceClp, 0) - discountsClp;
+  return Math.abs(sum - totalClp) > tolerance(totalClp) ? sum - totalClp : null;
+}
+
 export function buildReview(
   receipt: ParsedReceipt,
   today: IsoDate,
@@ -82,9 +98,7 @@ export function buildReview(
     };
   });
 
-  const sum = receipt.l.reduce((acc, line) => acc + line.p, 0) - receipt.ds;
-  const mismatch =
-    receipt.t !== null && Math.abs(sum - receipt.t) > tolerance(receipt.t) ? sum - receipt.t : null;
+  const mismatch = reviewMismatch(rows, receipt.t, receipt.ds);
 
   // La fecha de compra es la de la boleta, nunca futura.
   const purchasedAt = receipt.d && isIsoDate(receipt.d) ? minDate(receipt.d, today) : today;

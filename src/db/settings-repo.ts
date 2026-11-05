@@ -11,8 +11,11 @@ export type Settings = {
   summaryHour: number;
   summaryMinute: number;
   /** Horario silencioso, en minutos desde la medianoche. */
+  /** Ya no se usan (el resumen solo se programa entre 7:00 y 21:30); se mantienen por compatibilidad. */
   quietStart: number;
   quietEnd: number;
+  /** Aviso extra el día antes de que venza algo de alto riesgo (carne, pollo, pescado). */
+  highRiskAlerts: boolean;
   /** Categorías que no avisan. */
   mutedCategories: string[];
   /** Si los productos de larga duración (arroz, fideos, conservas) también avisan. */
@@ -43,6 +46,7 @@ export const DEFAULT_SETTINGS: Settings = {
   summaryMinute: 0,
   quietStart: 22 * 60,
   quietEnd: 8 * 60,
+  highRiskAlerts: false,
   mutedCategories: [],
   longLifeAlerts: false,
   pantryBasics: ['sal', 'aceite', 'azucar', 'harina', 'ajo'],

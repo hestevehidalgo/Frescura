@@ -1,6 +1,12 @@
 import { makeItem } from '@/db/test-items';
 
-import { rankRecipes, scoreRecipe, urgencyWeight, type RecipePreferences } from './ranking';
+import {
+  missingCost,
+  rankRecipes,
+  scoreRecipe,
+  urgencyWeight,
+  type RecipePreferences,
+} from './ranking';
 import { allBaseRecipes, getBaseRecipe } from './recipes';
 
 const TODAY = '2026-11-02';
@@ -91,4 +97,16 @@ describe('rankRecipes', () => {
     expect(noOven.some((r) => r.recipe.e.includes('horno'))).toBe(false);
     expect(noOven.some((r) => r.recipe.id === 'ensalada-chilena')).toBe(true);
   });
+});
+
+it('pesa el doble que falte la carne, el pollo o el pescado', () => {
+  expect(missingCost({ p: 'pollo-trozos', n: 'Pollo', q: 1, u: 'kg' })).toBe(2);
+  expect(missingCost({ p: ['pescado-fresco', 'tomate'], n: 'Pescado', q: 1, u: 'kg' })).toBe(2);
+  expect(missingCost({ p: 'limon', n: 'Limón', q: 1, u: 'un' })).toBe(1);
+  // Con lechuga y tomate, la ensalada sin pescado no debe ganarle a una receta sin proteína.
+  const today = '2026-11-02';
+  const items = [makeItem('lechuga', '2026-11-04'), makeItem('tomate', '2026-11-04')];
+  const ranked = rankRecipes(allBaseRecipes(), items, today, PREFS);
+  const top = ranked[0]?.recipe;
+  expect(top && top.i.some((i) => missingCost(i) === 2 && !i.o)).toBe(false);
 });

@@ -28,11 +28,10 @@ import { t, tn, type MessageKey } from '@/i18n';
 import { useSingleFlight } from '@/lib/single-flight';
 import { radius, spacing, useThemeColors } from '@/theme';
 
-type Filter = 'all' | 'quick' | 'chilean' | 'onePot' | 'mine';
+type Filter = 'all' | 'chilean' | 'onePot' | 'mine';
 
 const FILTERS: [Filter, MessageKey][] = [
   ['all', 'recipes.filterAll'],
-  ['quick', 'recipes.filterQuick'],
   ['chilean', 'recipes.filterChilean'],
   ['onePot', 'recipes.filterOnePot'],
   ['mine', 'recipes.filterMine'],
@@ -42,8 +41,6 @@ function matchesFilter({ recipe }: RankedRecipe, filter: Filter): boolean {
   switch (filter) {
     case 'all':
       return true;
-    case 'quick':
-      return recipe.m <= 30;
     case 'chilean':
       return recipe.tags.includes('chilena');
     case 'onePot':
