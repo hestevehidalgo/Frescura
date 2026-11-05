@@ -27,6 +27,7 @@ import {
   notifyInventoryChanged,
   notifyRecipesChanged,
   notifySettingsChanged,
+  notifyShoppingChanged,
   useSettings,
   useToday,
 } from '@/features/inventory/store';
@@ -177,6 +178,7 @@ export default function SettingsScreen() {
       notifyInventoryChanged();
       notifySettingsChanged();
       notifyRecipesChanged();
+      notifyShoppingChanged();
       toast(tn('settings.importDone', items));
     } catch {
       toast(t('settings.backupError'));
@@ -226,6 +228,7 @@ export default function SettingsScreen() {
     }
     notifyInventoryChanged();
     notifyRecipesChanged();
+    notifyShoppingChanged();
     notifySettingsChanged();
     toast(t('settings.deleteDone'));
   };

@@ -48,11 +48,14 @@ const OWNED_WEIGHT = 3;
 
 // Categorías del ingrediente principal: si falta, la receta casi no se puede hacer.
 const MAIN_CATEGORIES = new Set(['carnes', 'aves', 'pescados']);
+// Proteínas crudas que el catálogo guarda en otras categorías. El pollo asado no: se compra listo
+// en cualquier supermercado, así que falta "normal".
+const MAIN_PRODUCTS = new Set(['hamburguesas', 'pescado-congelado', 'longaniza', 'chorizo']);
 
 /** Lo que pesa que falte un ingrediente: el doble si es la carne, el pollo o el pescado. */
 export function missingCost(ingredient: RecipeIngredient): number {
-  const main = productIdsOf(ingredient).some((id) =>
-    MAIN_CATEGORIES.has(getCatalogProduct(id)?.categoryId ?? ''),
+  const main = productIdsOf(ingredient).some(
+    (id) => MAIN_PRODUCTS.has(id) || MAIN_CATEGORIES.has(getCatalogProduct(id)?.categoryId ?? ''),
   );
   return main ? 2 : 1;
 }

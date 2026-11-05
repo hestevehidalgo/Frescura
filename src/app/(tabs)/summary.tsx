@@ -8,7 +8,9 @@ import { ThemedText } from '@/components/themed-text';
 import { getCategory } from '@/features/catalog/catalog';
 import { useProductLookup, useStatsData, useToday } from '@/features/inventory/store';
 import { BarList } from '@/features/stats/components/bar-list';
+import { ShareMonthSheet } from '@/features/stats/components/share-card';
 import { monthLabel, monthName, perUnitLabel } from '@/features/stats/format';
+import { canShare, shareContent } from '@/features/stats/share';
 import {
   buildTips,
   monthlyStats,
@@ -46,6 +48,7 @@ export default function SummaryScreen() {
   const { data, error, reload } = useStatsData();
   const current = monthOf(today);
   const [month, setMonth] = useState(current);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const categoryOf = useMemo(
     () => (productId: string) => lookup(productId)?.categoryId ?? 'otros',
@@ -133,6 +136,20 @@ export default function SummaryScreen() {
           onPress={() => setMonth(shiftMonth(month, 1))}
         />
       </View>
+
+      {canShare(stats) && (
+        <Button
+          variant="secondary"
+          icon="share-social-outline"
+          label={t('share.button')}
+          onPress={() => setShareOpen(true)}
+        />
+      )}
+      <ShareMonthSheet
+        visible={shareOpen}
+        onClose={() => setShareOpen(false)}
+        content={shareContent(stats, monthName(month), month === current ? streak : 0)}
+      />
 
       {!hasActivity && (
         <ThemedText variant="muted" style={styles.centerText}>

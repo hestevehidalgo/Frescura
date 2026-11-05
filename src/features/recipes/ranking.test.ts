@@ -102,6 +102,7 @@ describe('rankRecipes', () => {
 it('pesa el doble que falte la carne, el pollo o el pescado', () => {
   expect(missingCost({ p: 'pollo-trozos', n: 'Pollo', q: 1, u: 'kg' })).toBe(2);
   expect(missingCost({ p: ['pescado-fresco', 'tomate'], n: 'Pescado', q: 1, u: 'kg' })).toBe(2);
+  expect(missingCost({ p: 'pollo-asado', n: 'Pollo asado', q: 250, u: 'g' })).toBe(1);
   expect(missingCost({ p: 'limon', n: 'Limón', q: 1, u: 'un' })).toBe(1);
   // Con lechuga y tomate, la ensalada sin pescado no debe ganarle a una receta sin proteína.
   const today = '2026-11-02';

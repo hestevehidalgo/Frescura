@@ -23,6 +23,15 @@ function HeaderButtons() {
           <Ionicons name="add-circle" size={30} color={colors.primary} />
         </Pressable>
       </Link>
+      <Link href="/shopping" asChild>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('shopping.open')}
+          hitSlop={8}
+          style={styles.headerButton}>
+          <Ionicons name="cart-outline" size={24} color={colors.text} />
+        </Pressable>
+      </Link>
       <Link href="/settings" asChild>
         <Pressable
           accessibilityRole="button"

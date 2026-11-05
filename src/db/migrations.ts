@@ -98,6 +98,21 @@ const MIGRATIONS: string[] = [
     created_at TEXT NOT NULL
   );
   `,
+  // 4: lista de compras
+  `
+  CREATE TABLE shopping_items (
+    id TEXT PRIMARY KEY NOT NULL,
+    name TEXT NOT NULL,
+    product_id TEXT,
+    quantity REAL,
+    unit TEXT,
+    source TEXT NOT NULL,
+    checked INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    checked_at TEXT
+  );
+  CREATE INDEX shopping_items_checked ON shopping_items (checked, created_at);
+  `,
 ];
 
 export const SCHEMA_VERSION = MIGRATIONS.length;

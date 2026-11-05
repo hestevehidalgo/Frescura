@@ -10,9 +10,10 @@ import { useToast } from '@/components/undo-toast';
 import type { InventoryItem } from '@/db/inventory-repo';
 import { useDb } from '@/db/provider';
 import { deleteUserRecipe, saveUserRecipe } from '@/db/recipes-repo';
+import { addShopping } from '@/db/shopping-repo';
 import { daysBetween, type IsoDate } from '@/lib/dates';
 import { relativeExpiryLabel } from '@/features/expiry/labels';
-import { notifyRecipesChanged, useToday } from '@/features/inventory/store';
+import { notifyRecipesChanged, notifyShoppingChanged, useToday } from '@/features/inventory/store';
 import { useItemActions } from '@/features/inventory/use-item-actions';
 import { cookedActions, itemsUsedBy, type UsedAmount } from '@/features/recipes/cooked';
 import { setPendingAiRecipe } from '@/features/recipes/pending';
@@ -25,6 +26,7 @@ import {
   scaleAmount,
 } from '@/features/recipes/servings';
 import { useRecipe } from '@/features/recipes/use-recipe';
+import { missingToShopping } from '@/features/shopping/shopping';
 import { t, tn, type MessageKey } from '@/i18n';
 import { formatDecimal, formatQuantity } from '@/lib/quantity';
 import { useSingleFlight } from '@/lib/single-flight';
@@ -166,6 +168,17 @@ export default function RecipeDetailScreen() {
     toast(t('recipes.deleted'), () => save(recipe));
   };
 
+  const addMissing = async () => {
+    let added = 0;
+    for (const entry of missingToShopping(ranked.missing, (servings ?? recipe.s) / recipe.s)) {
+      if (await addShopping(db, entry)) {
+        added += 1;
+      }
+    }
+    notifyShoppingChanged();
+    toast(added > 0 ? tn('shopping.addedMissing', added) : t('shopping.nothingNew'));
+  };
+
   const confirmCooked = async () => {
     const actions = cookedActions(usedItems, used);
     setCooking(false);
@@ -238,6 +251,14 @@ export default function RecipeDetailScreen() {
               onChange={(value) => setServings(clampServings(value))}
             />
           </View>
+          {ranked.missing.length > 0 && (
+            <Button
+              variant="ghost"
+              icon="cart-outline"
+              label={t('shopping.addMissing')}
+              onPress={() => void once(addMissing)}
+            />
+          )}
           {ranked.matches.map((match, index) => (
             <IngredientLine
               key={`${match.ingredient.n}-${index}`}

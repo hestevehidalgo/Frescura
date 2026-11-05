@@ -16,6 +16,7 @@ import { useDb } from '@/db/provider';
 import { listCustomProducts } from '@/db/products-repo';
 import { listUserRecipes } from '@/db/recipes-repo';
 import { getSettings, type Settings } from '@/db/settings-repo';
+import { listShopping, type ShoppingItem } from '@/db/shopping-repo';
 import { loadStatsData } from '@/db/stats-repo';
 import { getCatalogProduct, type Product } from '@/features/catalog/catalog';
 import { allBaseRecipes, type Recipe } from '@/features/recipes/recipes';
@@ -43,6 +44,11 @@ function createVersion() {
 const inventoryVersion = createVersion();
 const settingsVersion = createVersion();
 const recipesVersion = createVersion();
+const shoppingVersion = createVersion();
+
+export function notifyShoppingChanged(): void {
+  shoppingVersion.bump();
+}
 
 export function notifyRecipesChanged(): void {
   recipesVersion.bump();
@@ -142,6 +148,11 @@ export function useAllRecipes(): Query<Recipe[]> {
 /** Todos los productos (también los cerrados) y sus eventos, para el resumen y los precios. */
 export function useStatsData(): Query<StatsData> {
   return useQuery(loadStatsData, inventoryVersion, 'stats-data');
+}
+
+/** Lista de compras: pendientes primero, después lo ya comprado. */
+export function useShoppingList(): Query<ShoppingItem[]> {
+  return useQuery(listShopping, shoppingVersion, 'shopping');
 }
 
 export function useSettings(): Query<Settings> {

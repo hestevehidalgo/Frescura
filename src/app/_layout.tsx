@@ -72,6 +72,10 @@ export default function RootLayout() {
                 options={{ title: t('editor.title'), presentation: 'modal' }}
               />
               <Stack.Screen
+                name="shopping"
+                options={{ title: t('shopping.title'), presentation: 'modal' }}
+              />
+              <Stack.Screen
                 name="barcode"
                 options={{ title: t('barcode.title'), presentation: 'modal' }}
               />

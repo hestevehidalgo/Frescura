@@ -14,6 +14,7 @@ const TABLES = [
   'shelf_life_adjustments',
   'settings',
   'user_recipes',
+  'shopping_items',
 ] as const;
 
 type Table = (typeof TABLES)[number];
